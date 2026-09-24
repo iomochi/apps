@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fbf6f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="語録採集">
+<title>語録採集</title>
+<style>
+:root{--bg:#fbf6f1;--panel:#fff;--sand:#f4ece4;--line:#eadfd5;--text:#4b3f3c;--mute:#9b8a84;--rose:#a8626f;--blush:#f7e4e6;--blush2:#fdf1f2;--rose-line:#efd3d7;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.8 "Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,system-ui,sans-serif;padding:0 20px 72px}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:32px 0 20px}
+h1{font:500 22px/1.2 "Hiragino Mincho ProN","Yu Mincho",serif;margin:0 auto 0 0;letter-spacing:.14em;color:var(--rose)}
+h1::before{content:"♡";margin-right:10px;font-size:18px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 16px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{background:var(--blush2);border-color:var(--rose-line)}
+button.primary{background:var(--rose);color:#fff;border-color:var(--rose)}
+button.primary:hover{background:#94535f;border-color:#94535f}
+button.danger:hover{background:#fbeae8;border-color:#ecc4bf;color:#a5443b}
+:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+input,select,textarea{background:#fffdfb;border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%}
+input:focus,select:focus,textarea:focus{border-color:#d3a0a9;outline:none;box-shadow:0 0 0 3px var(--blush)}
+input::placeholder,textarea::placeholder{color:#c3b5ae}
+textarea{min-height:110px;resize:vertical;line-height:1.8}
+.bar{display:grid;grid-template-columns:1fr auto;gap:10px;padding-bottom:14px}
+.bar select{width:auto;min-width:190px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:22px;margin-bottom:26px;border-bottom:1px solid var(--line)}
+.chip{padding:2px 14px;font-size:13px;color:var(--mute);background:transparent}
+.chip[aria-pressed=true]{background:var(--blush);color:#8a4553;border-color:var(--rose-line)}
+.sep{width:1px;background:var(--line);margin:2px 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:9px;min-width:0;box-shadow:0 4px 18px rgba(150,105,95,.07)}
+.card.quote{background:var(--blush2);border-color:var(--rose-line)}
+.card.hit{outline:2px solid var(--rose);outline-offset:2px}
+.meta{font-size:12px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.tag{background:var(--sand);color:#7d6a62;border-radius:999px;padding:0 10px}
+.quote .tag{background:var(--blush);color:#8a4553}
+.card h2{font-size:16px;margin:0;font-weight:600;line-height:1.55}
+.card p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.who{font-size:13px;color:#8a4553;font-weight:600}
+.who .meta{display:inline;font-weight:400}
+.note{background:var(--panel);border:1px solid var(--rose-line);border-radius:12px;padding:10px 12px}
+.note .meta{margin-bottom:2px}
+.links{display:flex;flex-wrap:wrap;gap:6px;padding-top:4px}
+.links button{font-size:12px;padding:1px 12px;background:var(--sand);border-color:transparent;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.links button.q{background:var(--blush);color:#8a4553}
+.links button:hover{border-color:var(--rose-line)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:8px}
+.acts button{padding:1px 12px;font-size:12px;color:var(--mute)}
+.empty{color:var(--mute);text-align:center;padding:72px 0;grid-column:1/-1}
+dialog{background:var(--panel);color:var(--text);border:none;border-radius:24px;padding:26px;width:min(600px,94vw);max-height:92vh;box-shadow:0 20px 60px rgba(100,70,65,.22)}
+dialog::backdrop{background:rgba(75,63,60,.35)}
+form{display:grid;gap:14px}
+label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kind{display:flex;gap:8px}
+.kind label{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--text);border:1px solid var(--line);border-radius:999px;padding:5px 16px;cursor:pointer}
+.kind label:has(input:checked){background:var(--blush);border-color:var(--rose-line);color:#8a4553}
+.kind input{width:auto;accent-color:var(--rose)}
+.foot{flex-wrap:wrap;display:flex;justify-content:flex-end;gap:8px}
+.pick{border:1px solid var(--line);border-radius:12px;max-height:170px;overflow:auto;background:#fffdfb}
+.pick label{flex-direction:row;align-items:center;gap:8px;padding:6px 12px;color:var(--text);font-size:13px;border-bottom:1px solid var(--sand);cursor:pointer}
+.pick input{width:auto;accent-color:var(--rose)}
+.pick .t{color:#8a4553;background:var(--blush);border-radius:999px;padding:0 8px;font-size:11px;flex:none}
+.mrow{display:grid;grid-template-columns:1fr 130px auto;gap:8px;margin:6px 0}
+.mrow.g{grid-template-columns:1fr auto;font-weight:600}
+.msec{border-top:1px solid var(--line);padding:12px 0}
+.madd{display:grid;grid-template-columns:1fr 130px auto;gap:8px;margin-top:10px}
+.madd.g{grid-template-columns:1fr auto}
+#count{font-size:12px;color:var(--mute)}
+@media(max-width:560px){.row,.bar{grid-template-columns:1fr}.mrow,.madd{grid-template-columns:1fr 1fr}}
+.help h2{font:500 20px/1.3 "Hiragino Mincho ProN","Yu Mincho",serif;color:var(--rose);margin:0 0 4px;letter-spacing:.1em}
+.help h3{font-size:14px;color:var(--rose);margin:20px 0 4px}
+.help p,.help li{font-size:14px;margin:4px 0}
+.help ul,.help ol{padding-left:20px;margin:4px 0}
+.help .warn{background:var(--blush2);border:1px solid var(--rose-line);border-radius:12px;padding:8px 14px;margin-top:8px}
+dialog{overflow:auto}
+#bk{font-size:12px;color:var(--mute)}
+#bk.due{color:var(--rose);font-weight:600}
+.fab{display:none}
+@supports(padding:env(safe-area-inset-top)){body{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}}
+@media(max-width:700px){
+body{padding-bottom:110px;padding-top:env(safe-area-inset-top)}
+input,select,textarea{font-size:16px}
+button{min-height:38px}
+header{padding-top:20px}
+h1{flex:1 0 100%}
+#btnNew{display:none}
+.fab{display:grid;place-items:center;position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));width:56px;height:56px;min-height:0;padding:0;font-size:28px;line-height:1;box-shadow:0 8px 24px rgba(150,80,95,.35);z-index:5}
+.acts button{padding:6px 14px}
+.links button{padding:4px 12px}
+dialog{width:calc(100vw - 20px);padding:20px;max-height:calc(100dvh - 24px)}
+.bar select{width:100%}
+}
+[hidden]{display:none!important}
+.ph{grid-column:1/-1;margin:14px 0 0;font:500 17px/1.4 "Hiragino Mincho ProN","Yu Mincho",serif;color:var(--rose);display:flex;gap:10px;align-items:baseline;border-bottom:1px solid var(--rose-line);padding-bottom:6px}
+.who button{background:none;border:none;padding:0;min-height:0;color:inherit;font:inherit;font-weight:600;text-decoration:underline dotted;text-underline-offset:3px;border-radius:0}
+.who button:hover{background:none}
+.mrow.c{grid-template-columns:1fr 48px auto;align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>語録採集</h1>
+  <span id="count"></span>
+  <span id="bk"></span>
+  <button id="btnHelp">使い方</button>
+  <button id="btnMaster">管理</button>
+  <button id="btnExport">書き出し</button>
+  <button id="btnImport">読み込み</button>
+  <input type="file" id="file" accept="application/json,.json" hidden>
+  <button class="primary" id="btnNew">新規カード</button>
+</header>
+<div class="bar">
+  <input type="search" id="q" placeholder="キーワードで検索（ひとこと・本文・感想・出典・名前）" aria-label="検索">
+  <select id="whoSel" aria-label="人物・所属で絞り込み"></select>
+</div>
+<div class="filters" id="filters"></div>
+<main class="grid" id="grid"></main>
+<button class="primary fab" id="btnFab" aria-label="新規カード">＋</button>
+</div>
+
+<dialog id="dlg">
+<form id="form" method="dialog">
+  <div class="kind" role="radiogroup" aria-label="種類">
+    <label><input type="radio" name="kind" value="quote" checked>誰かの発言</label>
+    <label><input type="radio" name="kind" value="thought">自分の思考</label>
+  </div>
+  <label><span id="lTitle">ひとことで言うと</span><input id="fTitle" required maxlength="120"></label>
+  <div class="row" id="quoteRow" hidden>
+    <label>誰の発言？<input id="fWho" list="dlWho" placeholder="選択、または名前を入力" autocomplete="off"></label>
+    <label>出典<input id="fSource" list="dlSource" placeholder="雑誌・ラジオ・MC・配信など"></label>
+  </div>
+  <label><span id="lBody">内容</span><textarea id="fBody"></textarea></label>
+  <label id="lNote" hidden>自分の感想・違和感<textarea id="fNote"></textarea></label>
+  <label id="lGroup" hidden>所属（新しい人のとき・任意）<input id="fGroup" list="dlGroup" placeholder="選択、または入力" autocomplete="off"></label>
+  <div class="row">
+    <label>ベクトル / カテゴリ<input id="fCat" list="dlCat" placeholder="選択または自由入力"></label>
+    <label>日付<input type="date" id="fDate"></label>
+  </div>
+  <label>紐づけるカード
+    <input type="search" id="linkQ" placeholder="紐づけ先を検索">
+  </label>
+  <div class="pick" id="linkList"></div>
+  <datalist id="dlCat"></datalist>
+  <datalist id="dlSource"></datalist>
+  <datalist id="dlWho"></datalist>
+  <datalist id="dlGroup"></datalist>
+  <div class="foot">
+    <button type="button" id="btnCancel">キャンセル</button>
+    <button type="submit" id="btnSaveNext">保存して続けて追加</button>
+    <button class="primary" type="submit">保存</button>
+  </div>
+</form>
+</dialog>
+
+<dialog id="master">
+  <div class="filters" id="mTabs" style="margin-bottom:12px;padding-bottom:14px"></div>
+  <div id="masterBody"></div>
+  <div id="addPeople">
+    <div class="madd g"><input id="ngName" placeholder="新しい所属名"><button id="ngAdd">所属追加</button></div>
+    <div class="madd"><input id="nmName" placeholder="新しい人物名"><select id="nmGroup"></select><button id="nmAdd">人物追加</button></div>
+  </div>
+  <div class="madd g" id="addCat"><input id="ncName" placeholder="新しいカテゴリ名"><button id="ncAdd">カテゴリ追加</button></div>
+  <div class="foot" style="margin-top:16px"><button class="primary" id="mClose">閉じる</button></div>
+</dialog>
+
+<dialog id="help">
+<div class="help">
+  <h2>使い方</h2>
+  <p>語録採集は、誰かの言葉を集めて、自分の思考や違和感とつなげて残すためのメモアプリです。本の登場人物、ビジネス書の著者、友人のひとことなど、誰の言葉でも残せます。</p>
+
+  <h3>カードを作る</h3>
+  <ol>
+    <li>「新規カード」（スマホは右下の＋）を押します。</li>
+    <li>種類は「誰かの発言」が最初から選ばれています。自分の考えを書くときは「自分の思考」に切り替えます。</li>
+    <li>「誰の発言？」は、登録済みの人は候補から選び、初めての人は名前を入力します。入力した名前は、自動で登録されます（所属も任意で入れられます）。出典も自由入力で、過去の入力が候補に出ます。</li>
+    <li>発言内容と、自分の感想・違和感は、別々に書けます。同じ人・同じ出典の発言をまとめて入れるときは、「保存して続けて追加」が便利です。発言者・出典・日付・カテゴリが残ります。</li>
+    <li>ベクトル / カテゴリは、初期の4つから選ぶか、自由に入力できます。入力したものは次から選べます。</li>
+  </ol>
+
+  <h3>カードをつなげる</h3>
+  <ul>
+    <li>編集画面の「紐づけるカード」で、つなげたいカードにチェックを入れます。発言と思考、思考同士、発言同士のどれでも大丈夫です。</li>
+    <li>発言同士も、誰かの発言と自分の思考も、つなげられます。カードの「＋関連する発言」「＋この発言への思考」から、つないだ状態で作れます。</li>
+    <li>紐づけは双方向です。相手のカードにも自動で表示されます。</li>
+    <li>カード下のチップを押すと、そのカードにジャンプします。</li>
+    <li>発言カードの「＋この発言への思考」で、その発言に紐づいた思考カードをすぐ作れます。</li>
+  </ul>
+
+  <h3>人物・所属</h3>
+  <p>発言者は、カード作成時に名前を入力すると自動で登録されます。ヘッダーの「管理」→「人物・所属」で、所属の整理や名前の変更ができます。上部の絞り込みは、人物単位でも所属全体でも使えます。</p>
+  <p>「発言者別」に切り替えると、発言を人物ごとにまとめて見られます。カード上の発言者の名前を押すと、その人の発言だけに絞り込めます。</p>
+
+  <h3>カテゴリ・出典を整理する</h3>
+  <p>「管理」の「ベクトル / カテゴリ」「出典」タブで、名前の変更と削除ができます。変更は使っているカードすべてに反映されます。削除してもカード自体は残り、その項目だけ外れます。</p>
+
+  <h3>探す</h3>
+  <p>検索欄は、ひとこと・本文・感想・出典・名前が対象です。スペースで区切るとAND検索になります。種類とカテゴリのチップでも絞り込めます。</p>
+
+  <h3>保存とバックアップ（大切です）</h3>
+  <div class="warn">
+    <p>データは、いま使っている端末の、このブラウザの中にだけ保存されます。外部には送信されず、他の端末とは同期されません。</p>
+    <p>ブラウザのデータを消したり、プライベートブラウズで使ったり、iPhoneのSafariで長期間開かなかったりすると、カードが消えることがあります。</p>
+    <p>定期的に「書き出し」でJSONファイルを保存してください。スマホでは保存先を選ぶ画面が出ます。「ファイルに保存」などを選びます。ヘッダーに最終バックアップの日付が出て、30日以上たつとピンクで知らせます。</p>
+    <p>機種変更や、スマホとPCの間でデータを移すときも、「書き出し」→「読み込み」を使います。読み込みは、同じカードを上書きし、新しいカードを追加します。</p>
+  </div>
+
+  <h3>スマホのホーム画面に置く</h3>
+  <ul>
+    <li>iPhone（Safari）：共有ボタン →「ホーム画面に追加」</li>
+    <li>Android（Chrome）：右上のメニュー →「ホーム画面に追加」または「アプリをインストール」</li>
+    <li>ホーム画面から開いたときと、ブラウザで開いたときで、データが別になることがあります（特にiPhone）。どちらか一方で使い続けてください。</li>
+  </ul>
+
+  <h3>このアプリを人に渡す方へ</h3>
+  <ul>
+    <li>ファイルやURLを渡しても、あなたのカードは相手に渡りません。データは使う人ごとに、その人の端末の中だけに残ります。</li>
+    <li>スマホの人に配るときは、HTMLファイルを送るより、URLで公開するほうが確実です。この1ファイルをそのまま置ける静的ホスティング（GitHub Pages、Netlify、Cloudflare Pages など）が使えます。</li>
+    <li>URL（ドメイン）が変わると、保存データは別になります。公開後はURLを変えないでください。</li>
+    <li>他の人が書き出したJSONを読み込むときは、内容を確認してください。発言の引用を公開・転載する場合は、著作権や本人への配慮を、各自で判断してください。</li>
+  </ul>
+</div>
+<div class="foot" style="margin-top:20px"><button class="primary" id="hClose">閉じる</button></div>
+</dialog>
+
+<script>
+const KEY = 'thoughtcards.v2', OLD = 'thoughtcards.v1';
+const DEFAULT_CATS = ['当事者の感情', '観測者の正論', 'システムの構造', '違和感'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2);
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+
+// 旧形式（speaker が文字列）を memberId 形式へ変換
+function norm(d) {
+  d.groups = d.groups || []; d.members = d.members || [];
+  d.cards = (d.cards || []).filter(c => c && c.id && typeof c.title === 'string').map(c => {
+    if (c.speaker && !c.memberId) {
+      let m = d.members.find(x => x.name === c.speaker);
+      if (!m) { m = { id: uid(), name: c.speaker, groupId: '' }; d.members.push(m); }
+      c.memberId = m.id;
+    }
+    delete c.speaker; c.links = c.links || []; c.note = c.note || ''; c.memberId = c.memberId || '';
+    return c;
+  });
+  return d;
+}
+function load() {
+  try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.cards) return norm(v); } catch (e) {}
+  try { const o = JSON.parse(localStorage.getItem(OLD)); if (Array.isArray(o)) return norm({ cards: o }); } catch (e) {}
+  return { cards: [], groups: [], members: [] };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { alert('保存できませんでした。ブラウザの保存領域を確認してください。'); } }
+
+let db = load();
+if (!Array.isArray(db.cats)) db.cats = [...DEFAULT_CATS];
+let f = { kind: 'all', cat: '', who: '', q: '', view: 'list' };
+let mTab = 'people';
+const allCats = () => [...new Set([...db.cats, ...db.cards.map(c => c.category).filter(Boolean)])];
+let editId = null, formLinks = new Set();
+
+const member = id => db.members.find(m => m.id === id);
+const group = id => db.groups.find(g => g.id === id);
+const byId = id => db.cards.find(c => c.id === id);
+
+function memberOpts(sel, withGroup) {
+  const opt = (v, l) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(l)}</option>`;
+  const ms = gid => db.members.filter(m => m.groupId === gid).map(m => opt('m:' + m.id, m.name)).join('');
+  let h = withGroup ? opt('', '全員・全所属') : opt('', '（指定なし）');
+  db.groups.forEach(g => { h += `<optgroup label="${esc(g.name)}">${withGroup ? opt('g:' + g.id, g.name + ' 全体') : ''}${ms(g.id)}</optgroup>`; });
+  const un = ms('');
+  if (un) h += `<optgroup label="未所属">${un}</optgroup>`;
+  return h;
+}
+
+function render() {
+  const cats = allCats();
+  if (f.who && !(f.who.startsWith('m:') ? member(f.who.slice(2)) : group(f.who.slice(2)))) f.who = '';
+  if (f.cat && !cats.includes(f.cat)) f.cat = '';
+  const kinds = [['all', 'すべて'], ['quote', '発言'], ['thought', '思考']];
+  $('filters').innerHTML =
+    [['list', 'カード順'], ['people', '発言者別']].map(([k, l]) => `<button class="chip" data-view="${k}" aria-pressed="${f.view === k}">${l}</button>`).join('') +
+    '<span class="sep"></span>' +
+    (f.view === 'people' ? '' : kinds.map(([k, l]) => `<button class="chip" data-kind="${k}" aria-pressed="${f.kind === k}">${l}</button>`).join('') + '<span class="sep"></span>') +
+    `<button class="chip" data-cat="" aria-pressed="${f.cat === ''}">全カテゴリ</button>` +
+    cats.map(c => `<button class="chip" data-cat="${esc(c)}" aria-pressed="${f.cat === c}">${esc(c)}</button>`).join('');
+  $('whoSel').innerHTML = memberOpts(f.who, true);
+  $('dlCat').innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
+  $('dlWho').innerHTML = db.members.map(m => `<option value="${esc(m.name)}" label="${esc(group(m.groupId)?.name || '')}">`).join('');
+  $('dlGroup').innerHTML = db.groups.map(g => `<option value="${esc(g.name)}">`).join('');
+  $('dlSource').innerHTML = [...new Set(db.cards.map(c => c.source).filter(Boolean))].map(s => `<option value="${esc(s)}">`).join('');
+
+  const words = f.q.toLowerCase().split(/\s+/).filter(Boolean);
+  const inWho = c => {
+    if (!f.who) return true;
+    const m = member(c.memberId);
+    return f.who.startsWith('m:') ? c.memberId === f.who.slice(2) : !!m && m.groupId === f.who.slice(2);
+  };
+  const list = db.cards.filter(c =>
+    (f.view === 'people' ? c.kind === 'quote' : (f.kind === 'all' || c.kind === f.kind)) && (!f.cat || c.category === f.cat) && inWho(c) &&
+    words.every(w => [c.title, c.body, c.note, c.category, c.source, member(c.memberId)?.name].join('\n').toLowerCase().includes(w))
+  ).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.updated || 0) - (a.updated || 0));
+
+  $('count').textContent = `${list.length} / ${db.cards.length} 件`; updateBk();
+  const cardHtml = c => {
+    const q = c.kind === 'quote', m = member(c.memberId), g = m && group(m.groupId);
+    const links = c.links.map(byId).filter(Boolean);
+    return `<article class="card ${q ? 'quote' : ''}" data-id="${esc(c.id)}">
+      <div class="meta"><span class="tag">${q ? '発言' : '思考'}</span><span>${esc(c.date)}</span>${c.category ? `<span>${esc(c.category)}</span>` : ''}</div>
+      <h2>${esc(c.title)}</h2>
+      ${q && (m || c.source) ? `<div class="who">${m ? `<button data-who="m:${esc(m.id)}">${esc(m.name)}</button>` : ''}${g ? `<span class="meta"> ${esc(g.name)}</span>` : ''}${c.source ? `<span class="meta"> ／ ${esc(c.source)}</span>` : ''}</div>` : ''}
+      ${c.body ? `<p>${esc(c.body)}</p>` : ''}
+      ${q && c.note ? `<div class="note"><div class="meta">自分の感想</div><p>${esc(c.note)}</p></div>` : ''}
+      ${links.length ? `<div class="links">${links.map(l => `<button class="${l.kind === 'quote' ? 'q' : ''}" data-goto="${esc(l.id)}" title="${esc(l.title)}">${esc((l.kind === 'quote' && member(l.memberId) ? member(l.memberId).name + '：' : '') + l.title)}</button>`).join('')}</div>` : ''}
+      <div class="acts"><button data-edit="${esc(c.id)}">編集</button>${q ? `<button data-reply="${esc(c.id)}" data-rk="thought">＋この発言への思考</button><button data-reply="${esc(c.id)}" data-rk="quote">＋関連する発言</button>` : `<button data-reply="${esc(c.id)}" data-rk="quote">＋関連する発言</button><button data-reply="${esc(c.id)}" data-rk="thought">＋続きの思考</button>`}<button class="danger" data-del="${esc(c.id)}">削除</button></div>
+    </article>`;
+  };
+  let html;
+  if (!list.length) html = `<div class="empty">${db.cards.length ? '条件に合うカードがありません。絞り込みを変更してください。' : 'まだカードがありません。「新規カード」から最初の1枚を作成してください。'}</div>`;
+  else if (f.view === 'people') {
+    const ms = [];
+    db.groups.forEach(g => db.members.filter(m => m.groupId === g.id).forEach(m => ms.push(m)));
+    db.members.filter(m => !group(m.groupId)).forEach(m => ms.push(m));
+    html = '';
+    ms.forEach(m => {
+      const cs = list.filter(c => c.memberId === m.id), g = group(m.groupId);
+      if (cs.length) html += `<h3 class="ph">${esc(m.name)}<span class="meta">${g ? esc(g.name) + ' ・ ' : ''}${cs.length}件</span></h3>` + cs.map(cardHtml).join('');
+    });
+    const none = list.filter(c => !member(c.memberId));
+    if (none.length) html += `<h3 class="ph">発言者未設定<span class="meta">${none.length}件</span></h3>` + none.map(cardHtml).join('');
+  } else html = list.map(cardHtml).join('');
+  $('grid').innerHTML = html;
+}
+
+function goTo(id) {
+  f = { kind: 'all', cat: '', who: '', q: '', view: 'list' }; $('q').value = ''; render();
+  const el = document.querySelector(`[data-id="${CSS.escape(id)}"]`);
+  if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 1600); }
+}
+
+/* ---- カードフォーム ---- */
+function syncKind() {
+  const q = document.querySelector('input[name=kind]:checked').value === 'quote';
+  $('quoteRow').hidden = !q; $('lNote').hidden = !q; syncWho();
+  $('lBody').textContent = q ? '発言内容' : '内容';
+  $('lTitle').textContent = q ? 'どんな発言？' : 'ひとことで言うと';
+  $('fTitle').placeholder = q ? '例：頑張らなくていいよ、と言われた' : '例：優しさのはずなのに、置いていかれた感じ';
+}
+function renderPick() {
+  const w = $('linkQ').value.toLowerCase().trim();
+  const cands = db.cards.filter(c => c.id !== editId && (formLinks.has(c.id) || !w || (c.title + c.body + c.note + (member(c.memberId)?.name || '')).toLowerCase().includes(w)))
+    .sort((a, b) => formLinks.has(b.id) - formLinks.has(a.id) || (b.date || '').localeCompare(a.date || ''));
+  $('linkList').innerHTML = cands.length ? cands.map(c => `<label><input type="checkbox" data-lid="${esc(c.id)}" ${formLinks.has(c.id) ? 'checked' : ''}><span class="t">${c.kind === 'quote' ? (member(c.memberId)?.name || '発言') : '思考'}</span>${esc(c.title)}</label>`).join('')
+    : '<label style="color:var(--mute)">紐づけできるカードがありません</label>';
+}
+function syncWho() {
+  const n = $('fWho').value.trim();
+  $('lGroup').hidden = !n || $('quoteRow').hidden || db.members.some(m => m.name === n);
+}
+function resolveMember() {
+  const name = $('fWho').value.trim(); if (!name) return '';
+  let m = db.members.find(x => x.name === name);
+  if (!m) {
+    const gn = $('fGroup').value.trim(); let g = gn && db.groups.find(x => x.name === gn);
+    if (gn && !g) { g = { id: uid(), name: gn }; db.groups.push(g); }
+    m = { id: uid(), name, groupId: g ? g.id : '' }; db.members.push(m);
+  }
+  return m.id;
+}
+function openForm(id, preset) {
+  editId = id || null;
+  const c = byId(id) || { kind: 'quote', date: today(), links: [], ...preset };
+  document.querySelector(`input[name=kind][value=${c.kind}]`).checked = true;
+  $('fTitle').value = c.title || ''; $('fBody').value = c.body || ''; $('fNote').value = c.note || '';
+  $('fSource').value = c.source || ''; $('fCat').value = c.category || ''; $('fDate').value = c.date || today();
+  $('fWho').value = member(c.memberId)?.name || ''; $('fGroup').value = ''; syncWho();
+  $('linkQ').value = ''; formLinks = new Set(c.links || []);
+  syncKind(); renderPick();
+  $('dlg').showModal(); $('fTitle').focus();
+}
+$('form').addEventListener('submit', e => {
+  const kind = document.querySelector('input[name=kind]:checked').value, q = kind === 'quote';
+  const data = {
+    kind, title: $('fTitle').value.trim(), body: $('fBody').value, note: q ? $('fNote').value : '',
+    category: $('fCat').value.trim(), date: $('fDate').value || today(),
+    memberId: q ? resolveMember() : '', source: q ? $('fSource').value.trim() : '',
+    links: [...formLinks], updated: Date.now()
+  };
+  const id = editId || uid();
+  if (data.category && !db.cats.includes(data.category)) db.cats.push(data.category);
+  if (editId) db.cards = db.cards.map(c => c.id === id ? { ...c, ...data } : c);
+  else db.cards.push({ id, ...data });
+  db.cards.forEach(o => { // 紐づけは双方向
+    if (o.id === id) return;
+    const has = o.links.includes(id);
+    if (formLinks.has(o.id) && !has) o.links.push(id);
+    if (!formLinks.has(o.id) && has) o.links = o.links.filter(x => x !== id);
+  });
+  save(); render();
+  if (e.submitter && e.submitter.id === 'btnSaveNext') { // 発言者・出典・日付・カテゴリを残して続けて追加
+    e.preventDefault(); editId = null; formLinks = new Set();
+    $('fTitle').value = ''; $('fBody').value = ''; $('fNote').value = ''; $('linkQ').value = '';
+    syncWho(); renderPick(); $('fTitle').focus();
+  }
+});
+$('fWho').addEventListener('input', syncWho);
+$('linkList').addEventListener('change', e => { const id = e.target.dataset.lid; if (id) e.target.checked ? formLinks.add(id) : formLinks.delete(id); });
+$('linkQ').addEventListener('input', renderPick);
+document.querySelectorAll('input[name=kind]').forEach(r => r.addEventListener('change', syncKind));
+$('btnCancel').onclick = () => $('dlg').close();
+$('btnNew').onclick = () => openForm();
+
+/* ---- 管理（人物・所属 / カテゴリ / 出典） ---- */
+function countBy(key) { const m = new Map(); db.cards.forEach(c => { if (c[key]) m.set(c[key], (m.get(c[key]) || 0) + 1); }); return m; }
+function rename(key, old, nw) {
+  if (!nw || nw === old) return;
+  db.cards.forEach(c => { if (c[key] === old) c[key] = nw; });
+  if (key === 'category') db.cats = [...new Set(db.cats.map(c => c === old ? nw : c))];
+}
+function renderMaster() {
+  $('mTabs').innerHTML = [['people', '人物・所属'], ['cat', 'ベクトル / カテゴリ'], ['src', '出典']]
+    .map(([k, l]) => `<button class="chip" data-tab="${k}" aria-pressed="${mTab === k}">${l}</button>`).join('');
+  $('addPeople').hidden = mTab !== 'people'; $('addCat').hidden = mTab !== 'cat';
+  if (mTab !== 'people') {
+    const isCat = mTab === 'cat', cnt = countBy(isCat ? 'category' : 'source');
+    const names = isCat ? allCats() : [...cnt.keys()].sort((a, b) => a.localeCompare(b, 'ja'));
+    const [nk, dk] = isCat ? ['cname', 'cdel'] : ['sname', 'sdel'];
+    $('masterBody').innerHTML = (names.length ? names.map(n => `<div class="mrow c"><input data-${nk}="${esc(n)}" value="${esc(n)}" aria-label="名前"><span class="meta">${cnt.get(n) || 0}件</span><button class="danger" data-${dk}="${esc(n)}">削除</button></div>`).join('')
+      : '<div class="empty" style="padding:20px 0">まだありません</div>') +
+      '<p class="meta" style="margin-top:12px">名前を書き換えると、使っているカードすべてに反映されます。削除してもカードは残り、この項目だけ外れます。</p>';
+    return;
+  }
+  const gopt = sel => '<option value="">未所属</option>' + db.groups.map(g => `<option value="${esc(g.id)}" ${g.id === sel ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
+  const row = m => `<div class="mrow"><input data-mname="${esc(m.id)}" value="${esc(m.name)}" aria-label="人物名"><select data-mgroup="${esc(m.id)}">${gopt(m.groupId)}</select><button class="danger" data-mdel="${esc(m.id)}">削除</button></div>`;
+  let h = db.groups.map(g => `<section class="msec"><div class="mrow g"><input data-gname="${esc(g.id)}" value="${esc(g.name)}" aria-label="所属名"><button class="danger" data-gdel="${esc(g.id)}">所属削除</button></div>${db.members.filter(m => m.groupId === g.id).map(row).join('')}</section>`).join('');
+  const un = db.members.filter(m => !group(m.groupId));
+  if (un.length) h += `<section class="msec"><div class="meta">未所属</div>${un.map(row).join('')}</section>`;
+  $('masterBody').innerHTML = h || '<div class="empty" style="padding:20px 0">所属がありません。下から追加してください。</div>';
+  $('nmGroup').innerHTML = gopt($('nmGroup').value);
+}
+$('btnMaster').onclick = () => { renderMaster(); $('master').showModal(); };
+$('mClose').onclick = () => $('master').close();
+$('master').addEventListener('close', () => {
+  render();
+  if ($('dlg').open) syncWho();
+});
+$('master').addEventListener('change', e => {
+  const d = e.target.dataset, v = e.target.value.trim();
+  if (d.mname && v) member(d.mname).name = v;
+  if (d.gname && v) group(d.gname).name = v;
+  if (d.mgroup) member(d.mgroup).groupId = e.target.value;
+  if (d.cname !== undefined) rename('category', d.cname, v);
+  if (d.sname !== undefined) rename('source', d.sname, v);
+  save(); renderMaster();
+});
+$('master').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const d = b.dataset;
+  if (d.tab) { mTab = d.tab; renderMaster(); return; }
+  if (b.id === 'ngAdd' && $('ngName').value.trim()) { db.groups.push({ id: uid(), name: $('ngName').value.trim() }); $('ngName').value = ''; }
+  else if (b.id === 'nmAdd' && $('nmName').value.trim()) { db.members.push({ id: uid(), name: $('nmName').value.trim(), groupId: $('nmGroup').value }); $('nmName').value = ''; }
+  else if (b.id === 'ncAdd' && $('ncName').value.trim()) { const n = $('ncName').value.trim(); if (!db.cats.includes(n)) db.cats.push(n); $('ncName').value = ''; }
+  else if (d.mdel && confirm('この人物を削除しますか？発言カードの発言者は「指定なし」になります。')) { db.members = db.members.filter(m => m.id !== d.mdel); db.cards.forEach(c => { if (c.memberId === d.mdel) c.memberId = ''; }); }
+  else if (d.gdel && confirm('この所属を削除しますか？所属している人物は「未所属」になります。')) { db.groups = db.groups.filter(g => g.id !== d.gdel); db.members.forEach(m => { if (m.groupId === d.gdel) m.groupId = ''; }); }
+  else if (d.cdel !== undefined && confirm(`カテゴリ「${d.cdel}」を削除しますか？使っているカードからこのカテゴリが外れます。`)) { db.cats = db.cats.filter(c => c !== d.cdel); db.cards.forEach(c => { if (c.category === d.cdel) c.category = ''; }); }
+  else if (d.sdel !== undefined && confirm(`出典「${d.sdel}」を削除しますか？使っているカードからこの出典が外れます。`)) { db.cards.forEach(c => { if (c.source === d.sdel) c.source = ''; }); }
+  else return;
+  save(); renderMaster();
+});
+
+/* ---- 一覧の操作 ---- */
+$('q').addEventListener('input', e => { f.q = e.target.value; render(); });
+$('whoSel').addEventListener('change', e => { f.who = e.target.value; render(); });
+$('filters').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if ('view' in b.dataset) f.view = b.dataset.view; else if ('kind' in b.dataset) f.kind = b.dataset.kind; else f.cat = b.dataset.cat;
+  render();
+});
+$('grid').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const d = b.dataset;
+  if (d.goto) goTo(d.goto);
+  if (d.who) { f.who = d.who; f.kind = 'all'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  if (d.edit) openForm(d.edit);
+  if (d.reply) openForm(null, { kind: d.rk || 'thought', links: [d.reply] });
+  if (d.del && confirm('このカードを削除しますか？（紐づけも解除されます）')) {
+    db.cards = db.cards.filter(c => c.id !== d.del);
+    db.cards.forEach(c => c.links = c.links.filter(x => x !== d.del));
+    save(); render();
+  }
+});
+
+/* ---- 書き出し / 読み込み ---- */
+function updateBk() {
+  let d = ''; try { d = localStorage.getItem('thoughtcards.backup') || ''; } catch (e) {}
+  const el = $('bk');
+  if (!db.cards.length) { el.textContent = ''; return; }
+  el.textContent = d ? `最終バックアップ ${d}` : '未バックアップ';
+  el.className = (!d || Date.now() - new Date(d) > 30 * 864e5) ? 'due' : '';
+}
+$('btnExport').onclick = async () => {
+  const text = JSON.stringify({ app: 'thought-cards', version: 2, exported: new Date().toISOString(), ...db }, null, 2);
+  const name = `goroku-saishu-${today()}.json`;
+  const done = () => { try { localStorage.setItem('thoughtcards.backup', today()); } catch (e) {} updateBk(); };
+  try { // 公開ページ内では、保存の許可ダイアログ経由で書き出す
+    const dl = window.claude && await window.claude.use('downloads');
+    if (dl) { await dl.save({ filename: name, data: text }); done(); return; }
+  } catch (e) { if (e && e.code === 'declined') return; }
+  try { // スマホは共有シート（「ファイルに保存」など）を使う
+    const file = new File([text], name, { type: 'application/json' });
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name }); done(); return;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000); done();
+};
+$('btnHelp').onclick = () => $('help').showModal();
+$('hClose').onclick = () => $('help').close();
+$('btnFab').onclick = () => openForm();
+$('btnImport').onclick = () => $('file').click();
+$('file').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  try {
+    const j = JSON.parse(await file.text());
+    const inc = norm(Array.isArray(j) ? { cards: j } : { cards: j.cards, groups: j.groups, members: j.members });
+    if (!Array.isArray(j) && !Array.isArray(j.cards)) throw new Error('cards not found');
+    const merge = (key, items) => { const m = new Map(db[key].map(x => [x.id, x])); items.forEach(x => m.set(x.id, x)); db[key] = [...m.values()]; };
+    const before = db.cards.length;
+    if (!Array.isArray(j)) db.cats = [...new Set([...db.cats, ...(Array.isArray(j.cats) ? j.cats : [])])];
+    merge('groups', inc.groups); merge('members', inc.members); merge('cards', inc.cards);
+    save(); render();
+    alert(`読み込み完了：カード ${inc.cards.length} 件（新規 ${db.cards.length - before} 件、上書き ${inc.cards.length - (db.cards.length - before)} 件）`);
+  } catch (err) { alert('読み込めませんでした。このアプリで書き出した JSON ファイルを選択してください。'); }
+});
+
+render();
+try { // 端末のホーム画面用アイコンを生成
+  const c = document.createElement('canvas'); c.width = c.height = 180;
+  const x = c.getContext('2d'); x.fillStyle = '#f7e4e6'; x.fillRect(0, 0, 180, 180);
+  x.fillStyle = '#a8626f'; x.font = '100px serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('♡', 90, 96);
+  ['apple-touch-icon', 'icon'].forEach(r => { const l = document.createElement('link'); l.rel = r; l.href = c.toDataURL('image/png'); document.head.appendChild(l); });
+} catch (e) {}
+try { // 初回だけ使い方を表示
+  if (!localStorage.getItem('thoughtcards.help') && !db.cards.length) $('help').showModal();
+  localStorage.setItem('thoughtcards.help', '1');
+} catch (e) {}
+</script>
+</body>
+</html>
