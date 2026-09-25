@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -135,14 +136,14 @@ dialog{width:calc(100vw - 20px);padding:20px;max-height:calc(100dvh - 24px)}
   </div>
   <label><span id="lTitle">ひとことで言うと</span><input id="fTitle" required maxlength="120"></label>
   <div class="row" id="quoteRow" hidden>
-    <label>誰の発言？<input id="fWho" list="dlWho" placeholder="選択、または名前を入力" autocomplete="off"></label>
+    <label>誰の発言？<select id="sWho"></select><input id="fWho" placeholder="新しい人物の名前" autocomplete="off" hidden></label>
     <label>出典<input id="fSource" list="dlSource" placeholder="雑誌・ラジオ・MC・配信など"></label>
   </div>
   <label><span id="lBody">内容</span><textarea id="fBody"></textarea></label>
   <label id="lNote" hidden>自分の感想・違和感<textarea id="fNote"></textarea></label>
   <label id="lGroup" hidden>所属（新しい人のとき・任意）<input id="fGroup" list="dlGroup" placeholder="選択、または入力" autocomplete="off"></label>
   <div class="row">
-    <label>ベクトル / カテゴリ<input id="fCat" list="dlCat" placeholder="選択または自由入力"></label>
+    <label>ベクトル / カテゴリ<select id="sCat"></select><input id="fCat" placeholder="新しいカテゴリ名" autocomplete="off" hidden></label>
     <label>日付<input type="date" id="fDate"></label>
   </div>
   <label>紐づけるカード
@@ -181,9 +182,9 @@ dialog{width:calc(100vw - 20px);padding:20px;max-height:calc(100dvh - 24px)}
   <ol>
     <li>「新規カード」（スマホは右下の＋）を押します。</li>
     <li>種類は「誰かの発言」が最初から選ばれています。自分の考えを書くときは「自分の思考」に切り替えます。</li>
-    <li>「誰の発言？」は、登録済みの人は候補から選び、初めての人は名前を入力します。入力した名前は、自動で登録されます（所属も任意で入れられます）。出典も自由入力で、過去の入力が候補に出ます。</li>
+    <li>「誰の発言？」は、登録済みの人をプルダウンから選びます。初めての人は「＋新しい人物を入力」を選んで名前を入れます。入力した名前は、自動で登録されます（所属も任意で入れられます）。出典も自由入力で、過去の入力が候補に出ます。</li>
     <li>発言内容と、自分の感想・違和感は、別々に書けます。同じ人・同じ出典の発言をまとめて入れるときは、「保存して続けて追加」が便利です。発言者・出典・日付・カテゴリが残ります。</li>
-    <li>ベクトル / カテゴリは、初期の4つから選ぶか、自由に入力できます。入力したものは次から選べます。</li>
+    <li>ベクトル / カテゴリも同じで、プルダウンから選ぶか、「＋新しいカテゴリを入力」で追加します。</li>
   </ol>
 
   <h3>カードをつなげる</h3>
@@ -361,6 +362,29 @@ function renderPick() {
   $('linkList').innerHTML = cands.length ? cands.map(c => `<label><input type="checkbox" data-lid="${esc(c.id)}" ${formLinks.has(c.id) ? 'checked' : ''}><span class="t">${c.kind === 'quote' ? (member(c.memberId)?.name || '発言') : '思考'}</span>${esc(c.title)}</label>`).join('')
     : '<label style="color:var(--mute)">紐づけできるカードがありません</label>';
 }
+function refreshPickers() { // 既存はプルダウンで選択、なければ「＋新しく入力」
+  const wn = $('fWho').value.trim(), cn = $('fCat').value.trim(), m = db.members.find(x => x.name === wn), cats = allCats();
+  $('sWho').innerHTML = memberOpts(m ? 'm:' + m.id : '', false) + '<option value="__new">＋新しい人物を入力</option>';
+  $('sCat').innerHTML = '<option value="">（なし）</option>' + cats.map(c => `<option value="${esc(c)}" ${c === cn ? 'selected' : ''}>${esc(c)}</option>`).join('') + '<option value="__new">＋新しいカテゴリを入力</option>';
+  if (wn && !m) $('sWho').value = '__new';
+  if (cn && !cats.includes(cn)) $('sCat').value = '__new';
+  applyNew();
+}
+function applyNew() {
+  $('fWho').hidden = $('sWho').value !== '__new';
+  $('fCat').hidden = $('sCat').value !== '__new';
+  syncWho();
+}
+$('sWho').addEventListener('change', () => {
+  const v = $('sWho').value;
+  $('fWho').value = v === '__new' ? '' : (member(v.slice(2))?.name || '');
+  applyNew(); if (v === '__new') $('fWho').focus();
+});
+$('sCat').addEventListener('change', () => {
+  const v = $('sCat').value;
+  $('fCat').value = v === '__new' ? '' : v;
+  applyNew(); if (v === '__new') $('fCat').focus();
+});
 function syncWho() {
   const n = $('fWho').value.trim();
   $('lGroup').hidden = !n || $('quoteRow').hidden || db.members.some(m => m.name === n);
@@ -381,7 +405,7 @@ function openForm(id, preset) {
   document.querySelector(`input[name=kind][value=${c.kind}]`).checked = true;
   $('fTitle').value = c.title || ''; $('fBody').value = c.body || ''; $('fNote').value = c.note || '';
   $('fSource').value = c.source || ''; $('fCat').value = c.category || ''; $('fDate').value = c.date || today();
-  $('fWho').value = member(c.memberId)?.name || ''; $('fGroup').value = ''; syncWho();
+  $('fWho').value = member(c.memberId)?.name || ''; $('fGroup').value = ''; refreshPickers();
   $('linkQ').value = ''; formLinks = new Set(c.links || []);
   syncKind(); renderPick();
   $('dlg').showModal(); $('fTitle').focus();
@@ -408,7 +432,7 @@ $('form').addEventListener('submit', e => {
   if (e.submitter && e.submitter.id === 'btnSaveNext') { // 発言者・出典・日付・カテゴリを残して続けて追加
     e.preventDefault(); editId = null; formLinks = new Set();
     $('fTitle').value = ''; $('fBody').value = ''; $('fNote').value = ''; $('linkQ').value = '';
-    syncWho(); renderPick(); $('fTitle').focus();
+    refreshPickers(); renderPick(); $('fTitle').focus();
   }
 });
 $('fWho').addEventListener('input', syncWho);
@@ -450,7 +474,7 @@ $('btnMaster').onclick = () => { renderMaster(); $('master').showModal(); };
 $('mClose').onclick = () => $('master').close();
 $('master').addEventListener('close', () => {
   render();
-  if ($('dlg').open) syncWho();
+  if ($('dlg').open) refreshPickers();
 });
 $('master').addEventListener('change', e => {
   const d = e.target.dataset, v = e.target.value.trim();
