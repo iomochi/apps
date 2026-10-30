@@ -1,584 +1,1358 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#fbf6f1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; connect-src 'none'; object-src 'none'">
+<meta name="theme-color" content="#fff5f7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="語録採集">
-<title>語録採集</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="log">
+<meta name="format-detection" content="telephone=no">
+<title>log</title>
 <style>
-:root{--bg:#fbf6f1;--panel:#fff;--sand:#f4ece4;--line:#eadfd5;--text:#4b3f3c;--mute:#9b8a84;--rose:#a8626f;--blush:#f7e4e6;--blush2:#fdf1f2;--rose-line:#efd3d7;color-scheme:light}
-*{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.8 "Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,system-ui,sans-serif;padding:0 20px 72px}
-.wrap{max-width:1100px;margin:0 auto}
-header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:32px 0 20px}
-h1{font:500 22px/1.2 "Hiragino Mincho ProN","Yu Mincho",serif;margin:0 auto 0 0;letter-spacing:.14em;color:var(--rose)}
-h1::before{content:"♡";margin-right:10px;font-size:18px}
-button,input,select,textarea{font:inherit;color:inherit}
-button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 16px;cursor:pointer;transition:background .15s,border-color .15s}
-button:hover{background:var(--blush2);border-color:var(--rose-line)}
-button.primary{background:var(--rose);color:#fff;border-color:var(--rose)}
-button.primary:hover{background:#94535f;border-color:#94535f}
-button.danger:hover{background:#fbeae8;border-color:#ecc4bf;color:#a5443b}
-:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
-input,select,textarea{background:#fffdfb;border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%}
-input:focus,select:focus,textarea:focus{border-color:#d3a0a9;outline:none;box-shadow:0 0 0 3px var(--blush)}
-input::placeholder,textarea::placeholder{color:#c3b5ae}
-textarea{min-height:110px;resize:vertical;line-height:1.8}
-.bar{display:grid;grid-template-columns:1fr auto;gap:10px;padding-bottom:14px}
-.bar select{width:auto;min-width:190px}
-.filters{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:22px;margin-bottom:26px;border-bottom:1px solid var(--line)}
-.chip{padding:2px 14px;font-size:13px;color:var(--mute);background:transparent}
-.chip[aria-pressed=true]{background:var(--blush);color:#8a4553;border-color:var(--rose-line)}
-.sep{width:1px;background:var(--line);margin:2px 6px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:18px;align-items:start}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:9px;min-width:0;box-shadow:0 4px 18px rgba(150,105,95,.07)}
-.card.quote{background:var(--blush2);border-color:var(--rose-line)}
-.card.hit{outline:2px solid var(--rose);outline-offset:2px}
-.meta{font-size:12px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
-.tag{background:var(--sand);color:#7d6a62;border-radius:999px;padding:0 10px}
-.quote .tag{background:var(--blush);color:#8a4553}
-.card h2{font-size:16px;margin:0;font-weight:600;line-height:1.55}
-.card p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.who{font-size:13px;color:#8a4553;font-weight:600}
-.who .meta{display:inline;font-weight:400}
-.note{background:var(--panel);border:1px solid var(--rose-line);border-radius:12px;padding:10px 12px}
-.note .meta{margin-bottom:2px}
-.links{display:flex;flex-wrap:wrap;gap:6px;padding-top:4px}
-.links button{font-size:12px;padding:1px 12px;background:var(--sand);border-color:transparent;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.links button.q{background:var(--blush);color:#8a4553}
-.links button:hover{border-color:var(--rose-line)}
-.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:8px}
-.acts button{padding:1px 12px;font-size:12px;color:var(--mute)}
-.empty{color:var(--mute);text-align:center;padding:72px 0;grid-column:1/-1}
-dialog{background:var(--panel);color:var(--text);border:none;border-radius:24px;padding:26px;width:min(600px,94vw);max-height:92vh;box-shadow:0 20px 60px rgba(100,70,65,.22)}
-dialog::backdrop{background:rgba(75,63,60,.35)}
-form{display:grid;gap:14px}
-label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.kind{display:flex;gap:8px}
-.kind label{display:flex;flex-direction:row;align-items:center;gap:6px;color:var(--text);border:1px solid var(--line);border-radius:999px;padding:5px 16px;cursor:pointer}
-.kind label:has(input:checked){background:var(--blush);border-color:var(--rose-line);color:#8a4553}
-.kind input{width:auto;accent-color:var(--rose)}
-.foot{flex-wrap:wrap;display:flex;justify-content:flex-end;gap:8px}
-.pick{border:1px solid var(--line);border-radius:12px;max-height:170px;overflow:auto;background:#fffdfb}
-.pick label{flex-direction:row;align-items:center;gap:8px;padding:6px 12px;color:var(--text);font-size:13px;border-bottom:1px solid var(--sand);cursor:pointer}
-.pick input{width:auto;accent-color:var(--rose)}
-.pick .t{color:#8a4553;background:var(--blush);border-radius:999px;padding:0 8px;font-size:11px;flex:none}
-.mrow{display:grid;grid-template-columns:1fr 130px auto;gap:8px;margin:6px 0}
-.mrow.g{grid-template-columns:1fr auto;font-weight:600}
-.msec{border-top:1px solid var(--line);padding:12px 0}
-.madd{display:grid;grid-template-columns:1fr 130px auto;gap:8px;margin-top:10px}
-.madd.g{grid-template-columns:1fr auto}
-#count{font-size:12px;color:var(--mute)}
-@media(max-width:560px){.row,.bar{grid-template-columns:1fr}.mrow,.madd{grid-template-columns:1fr 1fr}}
-.help h2{font:500 20px/1.3 "Hiragino Mincho ProN","Yu Mincho",serif;color:var(--rose);margin:0 0 4px;letter-spacing:.1em}
-.help h3{font-size:14px;color:var(--rose);margin:20px 0 4px}
-.help p,.help li{font-size:14px;margin:4px 0}
-.help ul,.help ol{padding-left:20px;margin:4px 0}
-.help .warn{background:var(--blush2);border:1px solid var(--rose-line);border-radius:12px;padding:8px 14px;margin-top:8px}
-dialog{overflow:auto}
-#bk{font-size:12px;color:var(--mute)}
-#bk.due{color:var(--rose);font-weight:600}
-.fab{display:none}
-@supports(padding:env(safe-area-inset-top)){body{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}}
-@media(max-width:700px){
-body{padding-bottom:110px;padding-top:env(safe-area-inset-top)}
-input,select,textarea{font-size:16px}
-button{min-height:38px}
-header{padding-top:20px}
-h1{flex:1 0 100%}
-#btnNew{display:none}
-.fab{display:grid;place-items:center;position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));width:56px;height:56px;min-height:0;padding:0;font-size:28px;line-height:1;box-shadow:0 8px 24px rgba(150,80,95,.35);z-index:5}
-.acts button{padding:6px 14px}
-.links button{padding:4px 12px}
-dialog{width:calc(100vw - 20px);padding:20px;max-height:calc(100dvh - 24px)}
-.bar select{width:100%}
+/* =====================================================
+   log - 完全オフライン推し活管理アプリ
+   1. 変数 / 2. ベース / 3. レイアウト / 4. 部品 / 5. 画面別 / 6. シート・ダイアログ
+   ===================================================== */
+
+/* ---------- 1. 変数 ---------- */
+:root{
+  --primary:#ec4899;
+  --primary-light:#fbcfe8;
+  --bg:#fff5f7;
+  --card:#ffffff;
+  --text:#3b2a33;
+  --sub:#8a7480;
+  --line:#f3dfe6;
+  --soft:#fbcfe8;
+  --danger:#ef4444;
+  --ok:#16a34a;
+  --shadow:0 2px 12px rgba(236,72,153,.10);
+  --nav-h:60px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
 }
-[hidden]{display:none!important}
-.ph{grid-column:1/-1;margin:14px 0 0;font:500 17px/1.4 "Hiragino Mincho ProN","Yu Mincho",serif;color:var(--rose);display:flex;gap:10px;align-items:baseline;border-bottom:1px solid var(--rose-line);padding-bottom:6px}
-.who button{background:none;border:none;padding:0;min-height:0;color:inherit;font:inherit;font-weight:600;text-decoration:underline dotted;text-underline-offset:3px;border-radius:0}
-.who button:hover{background:none}
-.mrow.c{grid-template-columns:1fr 48px auto;align-items:center}
+[data-theme="dark"]{
+  --bg:#1b1217;
+  --card:#291c23;
+  --text:#f6e9ee;
+  --sub:#b8a1ab;
+  --line:#3c2a33;
+  --shadow:none;
+}
+
+/* ---------- 2. ベース ---------- */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
+input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:44px;padding:10px 12px;border:1.5px solid var(--line);
+  border-radius:12px;background:var(--card);color:var(--text);-webkit-appearance:none;appearance:none;outline:none;min-width:0}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea{resize:vertical;line-height:1.5}
+input[type=date],input[type=time]{display:block}
+input[type=color]{padding:2px;width:44px;min-height:40px;border-radius:10px}
+input[type=checkbox]{-webkit-appearance:checkbox;appearance:auto;width:22px;height:22px;min-height:22px;padding:0;flex:none;accent-color:var(--primary)}
+.links{display:flex;flex-direction:column;gap:4px;max-height:230px;overflow-y:auto;border:1.5px solid var(--line);border-radius:12px;padding:6px;background:var(--card)}
+.f label.lk{display:flex;align-items:center;gap:10px;margin:0;padding:8px 6px;border-radius:8px;font-size:14px;font-weight:400;color:var(--text);cursor:pointer}
+a{color:var(--primary)}
+h3{margin:0 0 10px;font-size:15px}
+
+/* ---------- 3. レイアウト ---------- */
+#app{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;max-width:640px;display:flex;flex-direction:column;background:var(--bg)}
+#top{flex:none;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + var(--safe-t)) 16px 8px}
+.logo{font-size:26px;font-weight:800;color:var(--primary);letter-spacing:.02em}
+#topSub{margin-left:10px;font-size:13px;color:var(--sub);font-weight:600}
+.iconbtn{width:44px;height:44px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);font-size:18px}
+#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 14px 110px}
+#nav{flex:none;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:var(--safe-b);box-shadow:0 -2px 12px rgba(0,0,0,.04)}
+#nav button{flex:1;height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--sub);min-width:0}
+#nav button .ic{font-size:21px;line-height:1.1;filter:grayscale(.85) opacity(.7)}
+#nav button .lb{font-size:9.5px;margin-top:2px;white-space:nowrap;font-weight:600}
+#nav button.on{color:var(--primary)}
+#nav button.on .ic{filter:none}
+#fab{position:absolute;right:16px;bottom:calc(var(--nav-h) + var(--safe-b) + 16px);width:56px;height:56px;border-radius:50%;
+  background:var(--primary);color:#fff;font-size:30px;line-height:1;box-shadow:0 6px 18px rgba(236,72,153,.4);z-index:5}
+#fab.hide{display:none}
+
+/* ---------- 4. 部品 ---------- */
+.card{background:var(--card);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card.tap{cursor:pointer}
+.row{display:flex;align-items:center}
+.row.between{justify-content:space-between}
+.row.gap{gap:8px}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.sub{color:var(--sub);font-size:12.5px}
+.meta{font-size:13px;color:var(--sub);margin-top:2px;word-break:break-word}
+.ttl{font-weight:700;font-size:16px;margin:6px 0 2px;word-break:break-word}
+.empty{text-align:center;color:var(--sub);padding:36px 12px;font-size:14px}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:2px 9px 2px 7px;border-radius:99px;background:var(--soft);color:var(--text);max-width:100%}
+.chip i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c,var(--primary));margin-right:5px;flex:none}
+.badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:2px 9px;border-radius:99px;background:var(--b,var(--primary));white-space:nowrap}
+.pill{display:inline-flex;align-items:center;min-height:32px;padding:4px 11px;border-radius:99px;background:var(--soft);font-size:13px;font-weight:600;margin:4px 6px 0 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:14px;background:var(--primary);color:#fff;font-weight:700;font-size:15px;text-decoration:none}
+.btn.ghost{background:var(--soft);color:var(--text)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.line{background:transparent;border:1.5px solid var(--danger);color:var(--danger)}
+.btn.sm{min-height:36px;padding:0 13px;font-size:13px;border-radius:11px}
+.btn.block{display:flex;width:100%}
+.btn-text{min-height:44px;padding:0 6px;color:var(--sub);font-size:15px}
+.btn-text.strong{color:var(--primary);font-weight:700}
+.seg{display:flex;background:var(--soft);border-radius:12px;padding:3px;margin-bottom:8px}
+.seg button{flex:1;min-height:38px;border-radius:10px;font-size:13px;font-weight:700;color:var(--text);opacity:.75}
+.seg button.on{background:var(--card);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1);opacity:1}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch}
+.chips button{flex:none;min-height:36px;padding:0 14px;border-radius:99px;background:var(--card);border:1.5px solid var(--line);font-size:13px;font-weight:600;white-space:nowrap}
+.chips button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.search{margin-bottom:8px}
+.toolbar select{font-size:14px;padding:8px 28px 8px 10px;min-height:40px}
+.bar{height:9px;border-radius:5px;background:var(--soft);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:5px;background:var(--primary)}
+.neg{color:var(--danger)}
+.pos{color:var(--ok)}
+.dim{opacity:.55}
+.banner{background:var(--soft);border-radius:14px;padding:11px 13px;margin-bottom:12px;font-size:13px}
+
+/* ---------- 5. 画面別 ---------- */
+/* ダッシュボード */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border-radius:16px;padding:11px 6px;text-align:center;box-shadow:var(--shadow);min-width:0}
+.stat b{display:block;font-size:18px;color:var(--primary);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat span{font-size:11px;color:var(--sub)}
+.next{background:linear-gradient(135deg,var(--primary),#f9a8d4);color:#fff}
+.next .meta,.next .sub{color:rgba(255,255,255,.9)}
+.glegend{display:flex;flex-wrap:wrap;gap:6px}
+
+/* カレンダー */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calhead .mt{font-size:18px;font-weight:800}
+.calhead .nb{width:44px;height:44px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);font-size:18px;color:var(--primary)}
+.calhead .today{min-height:36px;padding:0 12px;border-radius:99px;background:var(--soft);font-size:13px;font-weight:700}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .wd{text-align:center;font-size:11px;color:var(--sub);padding:2px 0;font-weight:700}
+.cal .wd.d0,.cell.d0 .dn{color:#ef4444}
+.cal .wd.d6,.cell.d6 .dn{color:#3b82f6}
+.cell{position:relative;min-height:56px;background:var(--card);border-radius:12px;padding:4px 3px;text-align:left;display:flex;flex-direction:column;align-items:center;box-shadow:var(--shadow);min-width:0}
+.cell.empty{background:transparent;box-shadow:none}
+.cell .dn{font-size:13px;font-weight:700}
+.cell .cnt{position:absolute;top:2px;right:3px;min-width:15px;height:15px;border-radius:8px;background:var(--primary);color:#fff;font-size:9.5px;font-weight:800;line-height:15px;text-align:center;padding:0 3px}
+.cell .dots{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;margin-top:4px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--primary))}
+.dot.trip{border-radius:2px;background:transparent;border:2px solid var(--primary);width:9px;height:9px}
+.cell.today{outline:2px solid var(--primary)}
+.cell.today .dn{color:var(--primary)}
+.cell.sel{background:var(--soft)}
+.ev{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);gap:10px;cursor:pointer}
+.ev:last-child{border-bottom:0}
+.ev .bar2{width:5px;align-self:stretch;border-radius:3px;background:var(--c,var(--primary))}
+
+/* チケット */
+.tk{border-left:6px solid var(--c,var(--primary))}
+.tk .qr{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.tk .qr .url{font-size:11.5px;color:var(--sub);word-break:break-all;margin-bottom:6px}
+.price{font-weight:700;color:var(--primary)}
+
+/* 勝率 */
+.big{font-size:34px;font-weight:800;color:var(--primary);line-height:1.1}
+.rk{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rk:last-child{border-bottom:0}
+.rk .no{width:28px;text-align:center;font-weight:800;color:var(--sub)}
+.wl{display:flex;align-items:center;gap:6px;margin-top:8px}
+.wl .c{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--soft);border-radius:12px;padding:4px 6px 4px 12px;font-weight:700;font-size:13px}
+.wl .c button{width:34px;height:34px;border-radius:10px;background:var(--card);font-size:18px;font-weight:800;color:var(--primary)}
+
+/* 収支 */
+.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sumgrid .stat b{font-size:16px}
+.mrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.mrow:last-child{border-bottom:0}
+.mrow .amt{font-weight:800;white-space:nowrap}
+.brow{margin:8px 0}
+.brow .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
+
+/* レポ */
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word}
+.pre{white-space:pre-wrap;word-break:break-word}
+.sec{margin-top:14px}
+.sec h4{margin:0 0 4px;font-size:13px;color:var(--primary)}
+ol.set{margin:0;padding-left:26px}
+ol.set li{padding:2px 0}
+
+/* 設定 */
+.grow-row{display:flex;align-items:center;gap:8px;padding:6px 0}
+.grow-row .nm{flex:1;font-weight:600;word-break:break-all}
+.kv{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--sub)}
+.kv b{color:var(--text)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+
+/* ---------- 6. シート・ダイアログ ---------- */
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(40,20,30,.42);z-index:50;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.show{opacity:1;pointer-events:auto}
+.overlay.center{align-items:center;z-index:70}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;border-radius:22px 22px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .25s}
+.overlay.show .sheet{transform:none}
+.sheet-head{flex:none;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line)}
+.sheet-head b{font-size:16px}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(28px + var(--safe-b))}
+.fgrid{display:flex;flex-wrap:wrap;gap:12px 10px}
+.f{width:100%}
+.f.half{width:calc(50% - 5px)}
+.f label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:0 0 4px 2px}
+.f label em{color:var(--primary);font-style:normal;margin-left:2px}
+.dialog{background:var(--card);width:calc(100% - 48px);max-width:340px;border-radius:20px;padding:20px;transform:scale(.94);transition:transform .2s}
+.overlay.show .dialog{transform:none}
+.dialog p{margin:0 0 16px;white-space:pre-wrap;word-break:break-word}
+.dlg-btns{display:flex;gap:10px}
+.dlg-btns button{flex:1;min-height:46px;border-radius:13px;font-weight:700;background:var(--soft)}
+.dlg-btns button.ok{background:var(--primary);color:#fff}
+.dlg-btns button.ok.danger{background:var(--danger)}
+#toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) + 84px);transform:translateX(-50%) translateY(20px);background:rgba(40,25,32,.92);color:#fff;
+  padding:10px 18px;border-radius:99px;font-size:13.5px;z-index:90;opacity:0;pointer-events:none;transition:all .25s;max-width:86%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.choose{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choose button{background:var(--card);border-radius:16px;padding:18px 8px;font-weight:700;box-shadow:var(--shadow);font-size:15px}
+.choose button span{display:block;font-size:28px;margin-bottom:4px}
+.sres-h{font-size:12px;font-weight:800;color:var(--primary);margin:14px 0 2px}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <h1>語録採集</h1>
-  <span id="count"></span>
-  <span id="bk"></span>
-  <button id="btnHelp">使い方</button>
-  <button id="btnMaster">管理</button>
-  <button id="btnExport">書き出し</button>
-  <button id="btnImport">読み込み</button>
-  <input type="file" id="file" accept="application/json,.json" hidden>
-  <button class="primary" id="btnNew">新規カード</button>
-</header>
-<div class="bar">
-  <input type="search" id="q" placeholder="キーワードで検索（ひとこと・本文・感想・出典・名前）" aria-label="検索">
-  <select id="whoSel" aria-label="人物・所属で絞り込み"></select>
-</div>
-<div class="filters" id="filters"></div>
-<main class="grid" id="grid"></main>
-<button class="primary fab" id="btnFab" aria-label="新規カード">＋</button>
+<div id="app">
+  <header id="top">
+    <div class="row"><span class="logo">log</span><span id="topSub"></span></div>
+    <button class="iconbtn" data-act="search" aria-label="検索">🔍</button>
+  </header>
+  <main id="view"></main>
+  <button id="fab" data-act="fab" aria-label="追加">＋</button>
+  <nav id="nav"></nav>
 </div>
 
-<dialog id="dlg">
-<form id="form" method="dialog">
-  <div class="kind" role="radiogroup" aria-label="種類">
-    <label><input type="radio" name="kind" value="quote" checked>誰かの発言</label>
-    <label><input type="radio" name="kind" value="thought">自分の思考</label>
+<!-- 下から出るシート(フォーム・詳細・検索など) -->
+<div id="ov" class="overlay"><div class="sheet" id="sheet"></div></div>
+<!-- 確認ダイアログ -->
+<div id="dlg" class="overlay center">
+  <div class="dialog">
+    <p id="dlgMsg"></p>
+    <div class="dlg-btns"><button data-act="dlgNo">キャンセル</button><button class="ok" id="dlgOk" data-act="dlgYes">OK</button></div>
   </div>
-  <label><span id="lTitle">ひとことで言うと</span><input id="fTitle" required maxlength="120"></label>
-  <div class="row" id="quoteRow" hidden>
-    <label>誰の発言？<select id="sWho"></select><input id="fWho" placeholder="新しい人物の名前" autocomplete="off" hidden></label>
-    <label>出典<input id="fSource" list="dlSource" placeholder="雑誌・ラジオ・MC・配信など"></label>
-  </div>
-  <label><span id="lBody">内容</span><textarea id="fBody"></textarea></label>
-  <label id="lNote" hidden>自分の感想・違和感<textarea id="fNote"></textarea></label>
-  <label id="lGroup" hidden>所属（新しい人のとき・任意）<input id="fGroup" list="dlGroup" placeholder="選択、または入力" autocomplete="off"></label>
-  <div class="row">
-    <label>ベクトル / カテゴリ<select id="sCat"></select><input id="fCat" placeholder="新しいカテゴリ名" autocomplete="off" hidden></label>
-    <label>日付<input type="date" id="fDate"></label>
-  </div>
-  <label>紐づけるカード
-    <input type="search" id="linkQ" placeholder="紐づけ先を検索">
-  </label>
-  <div class="pick" id="linkList"></div>
-  <datalist id="dlCat"></datalist>
-  <datalist id="dlSource"></datalist>
-  <datalist id="dlWho"></datalist>
-  <datalist id="dlGroup"></datalist>
-  <div class="foot">
-    <button type="button" id="btnCancel">キャンセル</button>
-    <button type="submit" id="btnSaveNext">保存して続けて追加</button>
-    <button class="primary" type="submit">保存</button>
-  </div>
-</form>
-</dialog>
-
-<dialog id="master">
-  <div class="filters" id="mTabs" style="margin-bottom:12px;padding-bottom:14px"></div>
-  <div id="masterBody"></div>
-  <div id="addPeople">
-    <div class="madd g"><input id="ngName" placeholder="新しい所属名"><button id="ngAdd">所属追加</button></div>
-    <div class="madd"><input id="nmName" placeholder="新しい人物名"><select id="nmGroup"></select><button id="nmAdd">人物追加</button></div>
-  </div>
-  <div class="madd g" id="addCat"><input id="ncName" placeholder="新しいカテゴリ名"><button id="ncAdd">カテゴリ追加</button></div>
-  <div class="foot" style="margin-top:16px"><button class="primary" id="mClose">閉じる</button></div>
-</dialog>
-
-<dialog id="help">
-<div class="help">
-  <h2>使い方</h2>
-  <p>語録採集は、誰かの言葉を集めて、自分の思考や違和感とつなげて残すためのメモアプリです。本の登場人物、ビジネス書の著者、友人のひとことなど、誰の言葉でも残せます。</p>
-
-  <h3>カードを作る</h3>
-  <ol>
-    <li>「新規カード」（スマホは右下の＋）を押します。</li>
-    <li>種類は「誰かの発言」が最初から選ばれています。自分の考えを書くときは「自分の思考」に切り替えます。</li>
-    <li>「誰の発言？」は、登録済みの人をプルダウンから選びます。初めての人は「＋新しい人物を入力」を選んで名前を入れます。入力した名前は、自動で登録されます（所属も任意で入れられます）。出典も自由入力で、過去の入力が候補に出ます。</li>
-    <li>発言内容と、自分の感想・違和感は、別々に書けます。同じ人・同じ出典の発言をまとめて入れるときは、「保存して続けて追加」が便利です。発言者・出典・日付・カテゴリが残ります。</li>
-    <li>ベクトル / カテゴリも同じで、プルダウンから選ぶか、「＋新しいカテゴリを入力」で追加します。</li>
-  </ol>
-
-  <h3>カードをつなげる</h3>
-  <ul>
-    <li>編集画面の「紐づけるカード」で、つなげたいカードにチェックを入れます。発言と思考、思考同士、発言同士のどれでも大丈夫です。</li>
-    <li>発言同士も、誰かの発言と自分の思考も、つなげられます。カードの「＋関連する発言」「＋この発言への思考」から、つないだ状態で作れます。</li>
-    <li>紐づけは双方向です。相手のカードにも自動で表示されます。</li>
-    <li>カード下のチップを押すと、そのカードにジャンプします。</li>
-    <li>発言カードの「＋この発言への思考」で、その発言に紐づいた思考カードをすぐ作れます。</li>
-  </ul>
-
-  <h3>人物・所属</h3>
-  <p>発言者は、カード作成時に名前を入力すると自動で登録されます。ヘッダーの「管理」→「人物・所属」で、所属の整理や名前の変更ができます。上部の絞り込みは、人物単位でも所属全体でも使えます。</p>
-  <p>「発言者別」に切り替えると、発言を人物ごとにまとめて見られます。カード上の発言者の名前を押すと、その人の発言だけに絞り込めます。</p>
-
-  <h3>カテゴリ・出典を整理する</h3>
-  <p>「管理」の「ベクトル / カテゴリ」「出典」タブで、名前の変更と削除ができます。変更は使っているカードすべてに反映されます。削除してもカード自体は残り、その項目だけ外れます。</p>
-
-  <h3>探す</h3>
-  <p>検索欄は、ひとこと・本文・感想・出典・名前が対象です。スペースで区切るとAND検索になります。種類とカテゴリのチップでも絞り込めます。</p>
-
-  <h3>保存とバックアップ（大切です）</h3>
-  <div class="warn">
-    <p>データは、いま使っている端末の、このブラウザの中にだけ保存されます。外部には送信されず、他の端末とは同期されません。</p>
-    <p>ブラウザのデータを消したり、プライベートブラウズで使ったり、iPhoneのSafariで長期間開かなかったりすると、カードが消えることがあります。</p>
-    <p>定期的に「書き出し」でJSONファイルを保存してください。スマホでは保存先を選ぶ画面が出ます。「ファイルに保存」などを選びます。ヘッダーに最終バックアップの日付が出て、30日以上たつとピンクで知らせます。</p>
-    <p>機種変更や、スマホとPCの間でデータを移すときも、「書き出し」→「読み込み」を使います。読み込みは、同じカードを上書きし、新しいカードを追加します。</p>
-  </div>
-
-  <h3>スマホのホーム画面に置く</h3>
-  <ul>
-    <li>iPhone（Safari）：共有ボタン →「ホーム画面に追加」</li>
-    <li>Android（Chrome）：右上のメニュー →「ホーム画面に追加」または「アプリをインストール」</li>
-    <li>ホーム画面から開いたときと、ブラウザで開いたときで、データが別になることがあります（特にiPhone）。どちらか一方で使い続けてください。</li>
-  </ul>
-
-  <h3>このアプリを人に渡す方へ</h3>
-  <ul>
-    <li>ファイルやURLを渡しても、あなたのカードは相手に渡りません。データは使う人ごとに、その人の端末の中だけに残ります。</li>
-    <li>スマホの人に配るときは、HTMLファイルを送るより、URLで公開するほうが確実です。この1ファイルをそのまま置ける静的ホスティング（GitHub Pages、Netlify、Cloudflare Pages など）が使えます。</li>
-    <li>URL（ドメイン）が変わると、保存データは別になります。公開後はURLを変えないでください。</li>
-    <li>他の人が書き出したJSONを読み込むときは、内容を確認してください。発言の引用を公開・転載する場合は、著作権や本人への配慮を、各自で判断してください。</li>
-  </ul>
 </div>
-<div class="foot" style="margin-top:20px"><button class="primary" id="hClose">閉じる</button></div>
-</dialog>
+<div id="toast"></div>
+<input type="file" id="fileIn" accept="application/json,.json" style="display:none">
 
 <script>
-const KEY = 'thoughtcards.v2', OLD = 'thoughtcards.v1';
-const DEFAULT_CATS = ['当事者の感情', '観測者の正論', 'システムの構造', '違和感'];
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid = () => crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2);
-const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+'use strict';
+/* =====================================================
+   log - 完全オフライン推し活管理アプリ
+   構成:
+     A. 定数 / ユーティリティ
+     B. ストレージ(LocalStorage・自動バックアップ)
+     C. テーマ
+     D. UI基盤(トースト・ダイアログ・シート)
+     E. フォーム定義
+     F. 各画面の描画
+     G. アクション(クリック処理)
+     H. 検索
+     I. バックアップ・復元
+     J. PWA
+     K. 起動
+   外部通信は一切行いません。
+   ===================================================== */
+(function(){
 
-// 旧形式（speaker が文字列）を memberId 形式へ変換
-function norm(d) {
-  d.groups = d.groups || []; d.members = d.members || [];
-  d.cards = (d.cards || []).filter(c => c && c.id && typeof c.title === 'string').map(c => {
-    if (c.speaker && !c.memberId) {
-      let m = d.members.find(x => x.name === c.speaker);
-      if (!m) { m = { id: uid(), name: c.speaker, groupId: '' }; d.members.push(m); }
-      c.memberId = m.id;
-    }
-    delete c.speaker; c.links = c.links || []; c.note = c.note || ''; c.memberId = c.memberId || '';
-    return c;
+/* ---------- A. 定数 / ユーティリティ ---------- */
+var KEY='log_app_v1', BAK='log_app_v1_bak', CORRUPT='log_app_v1_corrupt';
+var DEFAULT_GROUPS=[
+  {name:'timelesz',color:'#a855f7'},
+  {name:'Aぇ! group',color:'#3b82f6'},
+  {name:'Snow Man',color:'#ef4444'},
+  {name:'SixTONES',color:'#64748b'},
+  {name:'なにわ男子',color:'#f97316'},
+  {name:'WEST.',color:'#06b6d4'}
+];
+var NEW_COLORS=['#ec4899','#8b5cf6','#06b6d4','#22c55e','#f59e0b','#ef4444','#3b82f6','#14b8a6'];
+var PREFS=['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
+var STATUSES=['自名義','借用名義','同行','配布済','譲渡済','不参戦'];
+var STATUS_COLOR={'自名義':'#ec4899','借用名義':'#8b5cf6','同行':'#3b82f6','配布済':'#16a34a','譲渡済':'#f59e0b','不参戦':'#94a3b8'};
+var ATTENDS=['参戦','不参戦','未定'];
+var RESULTS=['当選','落選'];
+var WIN_METHODS=['FC先行','FC二次','一般先行','一般発売','当日券','リセール','同行者枠','譲渡','その他'];
+var MCATS=['チケット','交通','宿泊','グッズ','飲食','その他'];
+var WD=['日','月','火','水','木','金','土'];
+var COLL={ticket:'tickets',name:'names',trip:'trips',money:'money',report:'reports'};
+var KIND_LABEL={ticket:'チケット',name:'名義',trip:'遠征',money:'収支',report:'レポ'};
+var ACCENTS={
+  pink:{n:'ピンク',p:'#ec4899',l:'#fbcfe8',bg:'#fff5f7'},
+  lavender:{n:'ラベンダー',p:'#8b5cf6',l:'#ddd6fe',bg:'#f8f5ff'},
+  sky:{n:'スカイ',p:'#0ea5e9',l:'#bae6fd',bg:'#f2f9ff'},
+  mint:{n:'ミント',p:'#10b981',l:'#a7f3d0',bg:'#f1fbf7'}
+};
+var TABS=[
+  {id:'cal',ic:'📅',l:'カレンダー'},{id:'ticket',ic:'🎟',l:'チケット'},{id:'name',ic:'👤',l:'名義'},
+  {id:'trip',ic:'✈️',l:'遠征'},{id:'money',ic:'💰',l:'収支'},{id:'report',ic:'📝',l:'レポ'},{id:'set',ic:'⚙️',l:'設定'}
+];
+
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function pad(n){return (n<10?'0':'')+n}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function todayStr(){return ymd(new Date())}
+function parseD(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?new Date(+m[1],+m[2]-1,+m[3]):null}
+function fmtD(s,withY){var d=parseD(s);if(!d)return '';return (withY?d.getFullYear()+'/':'')+(d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')'}
+function diffDays(a,b){return Math.round((parseD(b)-parseD(a))/86400000)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function yen(n){n=Math.round(+n||0);return (n<0?'-':'')+'¥'+Math.abs(n).toLocaleString('ja-JP')}
+function num(v){var n=Number(v);return isFinite(n)?n:0}
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function hexA(h,a){var n=parseInt(h.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'}
+function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:''}
+/* 検索用の正規化: 全角半角・大文字小文字・カタカナ/ひらがなを揃える */
+function norm(s){
+  s=String(s==null?'':s);
+  try{s=s.normalize('NFKC')}catch(e){}
+  return s.toLowerCase().replace(/[\u30a1-\u30f6]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0x60)});
+}
+function tokens(q){return norm(q).split(/\s+/).filter(Boolean)}
+function matchItem(item,toks){
+  if(!toks.length)return true;
+  var vals=[];for(var k in item){if(k==='id'||k==='createdAt'||k==='updatedAt')continue;vals.push(item[k])}
+  var t=norm(vals.join(' '));
+  for(var i=0;i<toks.length;i++){if(t.indexOf(toks[i])<0)return false}
+  return true;
+}
+function rate(w,l){var t=num(w)+num(l);return t?num(w)/t*100:null}
+function fmtRate(r){return r==null?'--':(Math.round(r*10)/10).toFixed(1)+'%'}
+
+/* ---------- B. ストレージ ---------- */
+var mem={}, storageOk=true;
+var store={
+  get:function(k){try{return localStorage.getItem(k)}catch(e){storageOk=false;return mem.hasOwnProperty(k)?mem[k]:null}},
+  set:function(k,v){try{localStorage.setItem(k,v);return true}catch(e){storageOk=false;mem[k]=v;return false}},
+  del:function(k){try{localStorage.removeItem(k)}catch(e){}delete mem[k]}
+};
+function defaults(){
+  return {version:1,settings:{theme:'auto',accent:'pink',lastBackup:null,groups:clone(DEFAULT_GROUPS),winMethods:clone(WIN_METHODS)},tickets:[],names:[],trips:[],money:[],reports:[]};
+}
+function normalize(d){
+  var b=defaults(), s=d.settings||{};
+  b.settings.theme=['auto','light','dark'].indexOf(s.theme)>=0?s.theme:'auto';
+  b.settings.accent=ACCENTS[s.accent]?s.accent:'pink';
+  b.settings.lastBackup=s.lastBackup||null;
+  if(Array.isArray(s.groups)){
+    b.settings.groups=s.groups.filter(function(g){return g&&typeof g.name==='string'&&g.name}).map(function(g){
+      return {name:g.name,color:/^#[0-9a-f]{6}$/i.test(g.color)?g.color:'#94a3b8'};
+    });
+  }
+  if(Array.isArray(s.winMethods)){
+    b.settings.winMethods=s.winMethods.filter(function(w,i,a){return typeof w==='string'&&w&&a.indexOf(w)===i});
+  }
+  ['tickets','names','trips','money','reports'].forEach(function(k){
+    b[k]=Array.isArray(d[k])?d[k].filter(function(x){return x&&typeof x==='object'}).map(function(x){
+      var o=Object.assign({},x);if(!o.id)o.id=uid();return o;
+    }):[];
   });
-  return d;
+  return b;
 }
-function load() {
-  try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.cards) return norm(v); } catch (e) {}
-  try { const o = JSON.parse(localStorage.getItem(OLD)); if (Array.isArray(o)) return norm({ cards: o }); } catch (e) {}
-  return { cards: [], groups: [], members: [] };
+function parseBackup(text){
+  var o;
+  try{o=JSON.parse(text)}catch(e){throw new Error('JSONとして読み取れませんでした')}
+  var data=(o&&o.data&&typeof o.data==='object')?o.data:o;
+  if(!data||typeof data!=='object'||!['tickets','names','trips','money','reports'].some(function(k){return Array.isArray(data[k])})){
+    throw new Error('logのバックアップファイルではありません');
+  }
+  return normalize(data);
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { alert('保存できませんでした。ブラウザの保存領域を確認してください。'); } }
+var db=load();
+function load(){
+  var raw=store.get(KEY);
+  if(!raw)return defaults();
+  try{return normalize(JSON.parse(raw))}
+  catch(e){
+    store.set(CORRUPT,raw);                       // 壊れたデータは退避
+    var bak=store.get(BAK);
+    if(bak){try{var d=normalize(JSON.parse(bak));setTimeout(function(){toast('データが破損していたため自動バックアップから復元しました')},500);return d}catch(e2){}}
+    setTimeout(function(){toast('保存データを読み込めませんでした')},500);
+    return defaults();
+  }
+}
+function save(){
+  var json=JSON.stringify(db), prev=store.get(KEY);
+  if(prev&&prev!==json)store.set(BAK,prev);       // 1つ前の状態を自動バックアップ
+  if(!store.set(KEY,json))toast('保存に失敗しました。バックアップを取ってください');
+}
 
-let db = load();
-if (!Array.isArray(db.cats)) db.cats = [...DEFAULT_CATS];
-let f = { kind: 'all', cat: '', who: '', q: '', view: 'list' };
-let mTab = 'people';
-const allCats = () => [...new Set([...db.cats, ...db.cards.map(c => c.category).filter(Boolean)])];
-let editId = null, formLinks = new Set();
+/* ---------- C. テーマ ---------- */
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+function applyTheme(){
+  var t=db.settings.theme;
+  var dark=t==='dark'||(t==='auto'&&mq&&mq.matches);
+  var r=document.documentElement, a=ACCENTS[db.settings.accent]||ACCENTS.pink;
+  r.setAttribute('data-theme',dark?'dark':'light');
+  r.style.setProperty('--primary',a.p);
+  r.style.setProperty('--primary-light',a.l);
+  if(dark){r.style.removeProperty('--bg');r.style.setProperty('--soft',hexA(a.p,.24))}
+  else{r.style.setProperty('--bg',a.bg);r.style.setProperty('--soft',a.l)}
+  var m=document.querySelector('meta[name="theme-color"]');
+  if(m)m.setAttribute('content',dark?'#1b1217':a.bg);
+}
+if(mq){if(mq.addEventListener)mq.addEventListener('change',applyTheme);else if(mq.addListener)mq.addListener(applyTheme)}
 
-const member = id => db.members.find(m => m.id === id);
-const group = id => db.groups.find(g => g.id === id);
-const byId = id => db.cards.find(c => c.id === id);
+/* ---------- D. UI基盤 ---------- */
+var ui={
+  tab:'cal',calY:new Date().getFullYear(),calM:new Date().getMonth(),calSel:todayStr(),
+  tQ:'',tSort:'near',tGroup:'',tPeriod:'',tStatus:'',
+  nQ:'',rQ:'',
+  mMode:'month',mMonth:todayStr().slice(0,7),mYear:String(new Date().getFullYear()),mCat:'',
+  form:null,pasteMode:false
+};
+var toastTimer=null;
+function toast(msg){
+  var t=$('#toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show')},2400);
+}
+var dlgResolve=null;
+function confirmDlg(msg,okLabel,danger){
+  return new Promise(function(res){
+    dlgResolve=res;
+    $('#dlgMsg').textContent=msg;
+    var ok=$('#dlgOk');ok.textContent=okLabel||'OK';ok.className='ok'+(danger?' danger':'');
+    $('#dlg').classList.add('show');
+  });
+}
+function closeDlg(v){$('#dlg').classList.remove('show');var r=dlgResolve;dlgResolve=null;if(r)r(v)}
+function openSheet(html){$('#sheet').innerHTML=html;$('#ov').classList.add('show');var b=$('#sheet .sheet-body');if(b)b.scrollTop=0}
+function closeSheet(){$('#ov').classList.remove('show');ui.form=null;ui.pasteMode=false}
+function copyText(t){
+  return new Promise(function(res){
+    function fallback(){
+      try{
+        var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
+        ta.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px';
+        document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);
+        var ok=document.execCommand('copy');ta.remove();res(!!ok);
+      }catch(e){res(false)}
+    }
+    try{
+      if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(function(){res(true)},fallback);return}
+    }catch(e){}
+    fallback();
+  });
+}
+function groupColor(n){var g=db.settings.groups.filter(function(g){return g.name===n})[0];return g?g.color:'#c4a7b5'}
+function gchip(n){return n?'<span class="chip" style="--c:'+esc(groupColor(n))+'"><i></i>'+esc(n)+'</span>':''}
+function ensureGroup(n){
+  if(!n)return;
+  if(db.settings.groups.some(function(g){return g.name===n}))return;
+  db.settings.groups.push({name:n,color:NEW_COLORS[db.settings.groups.length%NEW_COLORS.length]});
+}
+function emptyBox(msg){return '<div class="empty">'+msg+'<br>右下の＋から登録できます</div>'}
 
-function memberOpts(sel, withGroup) {
-  const opt = (v, l) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(l)}</option>`;
-  const ms = gid => db.members.filter(m => m.groupId === gid).map(m => opt('m:' + m.id, m.name)).join('');
-  let h = withGroup ? opt('', '全員・全所属') : opt('', '（指定なし）');
-  db.groups.forEach(g => { h += `<optgroup label="${esc(g.name)}">${withGroup ? opt('g:' + g.id, g.name + ' 全体') : ''}${ms(g.id)}</optgroup>`; });
-  const un = ms('');
-  if (un) h += `<optgroup label="未所属">${un}</optgroup>`;
+/* ---------- E. フォーム定義 ---------- */
+var FORMS={
+  ticket:{title:'チケット',def:function(){return {attend:'参戦',status:'自名義',count:1,result:'当選'}},fields:[
+    {k:'group',l:'グループ名',t:'group'},
+    {k:'title',l:'公演名',t:'text',req:1},
+    {k:'date',l:'日付',t:'date',half:1},{k:'time',l:'時間',t:'time',half:1},
+    {k:'venue',l:'会場',t:'text'},
+    {k:'pref',l:'都道府県',t:'select',half:1,opts:[{v:'',l:'選択なし'}].concat(PREFS)},{k:'count',l:'枚数',t:'number',half:1},
+    {k:'seat',l:'座席',t:'text',half:1},{k:'gate',l:'ゲート',t:'text',half:1},
+    {k:'price',l:'金額(1枚・円)',t:'number',half:1},{k:'fee',l:'手数料(1枚・円)',t:'number',half:1},
+    {k:'orderFee',l:'1申込あたりの手数料(円・申込全体で1回。枚数で按分して表示)',t:'number'},
+    {k:'winMethod',l:'当選方法',t:'win',half:1},{k:'result',l:'申込結果(勝率に反映)',t:'select',half:1,opts:RESULTS},
+    {k:'holder',l:'名義',t:'holder'},
+    {k:'attend',l:'参戦有無',t:'select',half:1,opts:ATTENDS},{k:'status',l:'チケット状態',t:'select',half:1,opts:STATUSES},
+    {k:'companions',l:'同行者',t:'text'},
+    {k:'qr',l:'QRリンク',t:'url',ph:'https://...'},
+    {k:'memo',l:'メモ',t:'textarea'}
+  ]},
+  name:{title:'名義',def:function(){return {wins:0,losses:0}},fields:[
+    {k:'name',l:'名義名',t:'text',req:1},
+    {k:'group',l:'グループ',t:'group'},
+    {k:'memberNo',l:'会員番号',t:'text',half:1},{k:'tantou',l:'担当',t:'text',half:1},
+    {k:'joinDate',l:'入会日',t:'date',half:1},
+    {k:'renewMonth',l:'更新月',t:'select',half:1,opts:[{v:'',l:'未設定'}].concat([1,2,3,4,5,6,7,8,9,10,11,12].map(function(m){return {v:m,l:m+'月'}}))},
+    {k:'fee',l:'年会費(円)',t:'number'},
+    {k:'wins',l:'過去の当選数(任意)',t:'number',half:1},{k:'losses',l:'過去の落選数(任意)',t:'number',half:1},
+    {k:'memo',l:'メモ',t:'textarea'}
+  ]},
+  trip:{title:'遠征',def:function(){return {}},fields:[
+    {k:'name',l:'遠征名',t:'text',req:1},
+    {k:'ticketIds',l:'紐づける公演(登録済みチケットから選択)',t:'ticketlinks'},
+    {k:'show',l:'その他の公演名(任意)',t:'text'},
+    {k:'depart',l:'出発日',t:'date',half:1},{k:'returnDate',l:'帰宅日',t:'date',half:1},
+    {k:'shinkansen',l:'新幹線',t:'text',ph:'列車名・時刻・座席など'},
+    {k:'plane',l:'飛行機',t:'text',ph:'便名・時刻など'},
+    {k:'bus',l:'バス',t:'text',ph:'会社名・時刻など'},
+    {k:'hotel',l:'ホテル',t:'text'},
+    {k:'checkin',l:'チェックイン',t:'date',half:1},{k:'checkout',l:'チェックアウト',t:'date',half:1},
+    {k:'venue',l:'会場',t:'text'},
+    {k:'memo',l:'メモ',t:'textarea'}
+  ]},
+  money:{title:'収支',def:function(){return {type:'支出',category:'チケット',date:todayStr()}},fields:[
+    {k:'type',l:'区分',t:'select',half:1,opts:['支出','収入']},{k:'date',l:'日付',t:'date',half:1,req:1},
+    {k:'category',l:'カテゴリ',t:'select',half:1,opts:MCATS},{k:'amount',l:'金額(円)',t:'number',half:1,req:1},
+    {k:'title',l:'内容',t:'text'},
+    {k:'memo',l:'メモ',t:'textarea'}
+  ]},
+  report:{title:'ライブレポ',def:function(){return {}},fields:[
+    {k:'title',l:'公演名',t:'text',req:1},
+    {k:'group',l:'グループ',t:'group'},
+    {k:'date',l:'日付',t:'date',half:1},{k:'seat',l:'座席',t:'text',half:1},
+    {k:'setlist',l:'セトリ(1行1曲)',t:'textarea',rows:8,ph:'1曲ずつ改行して入力'},
+    {k:'mc',l:'MCメモ',t:'textarea',rows:4},
+    {k:'impression',l:'感想',t:'textarea',rows:5},
+    {k:'memo',l:'メモ',t:'textarea'}
+  ]}
+};
+function fieldHtml(f,v){
+  var id='f_'+f.k, val=(v==null?'':v), inp='', ph=f.ph?' placeholder="'+esc(f.ph)+'"':'';
+  switch(f.t){
+    case 'textarea':
+      inp='<textarea id="'+id+'" name="'+f.k+'" rows="'+(f.rows||3)+'"'+ph+'>'+esc(val)+'</textarea>';break;
+    case 'select':
+      inp='<select id="'+id+'" name="'+f.k+'">'+f.opts.map(function(o){
+        var ov=(typeof o==='object')?o.v:o, ol=(typeof o==='object')?o.l:o;
+        return '<option value="'+esc(ov)+'"'+(String(ov)===String(val)?' selected':'')+'>'+esc(ol)+'</option>';
+      }).join('')+'</select>';break;
+    case 'number':
+      inp='<input id="'+id+'" name="'+f.k+'" type="number" inputmode="numeric" min="0" step="1" value="'+esc(val)+'"'+ph+'>';break;
+    case 'date': case 'time':
+      inp='<input id="'+id+'" name="'+f.k+'" type="'+f.t+'" value="'+esc(val)+'">';break;
+    case 'url':
+      inp='<input id="'+id+'" name="'+f.k+'" type="url" inputmode="url" autocapitalize="none" autocorrect="off" value="'+esc(val)+'"'+ph+'>';break;
+    case 'group':
+      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_group" autocomplete="off" value="'+esc(val)+'" placeholder="選択または入力">';break;
+    case 'holder':
+      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_holder" autocomplete="off" value="'+esc(val)+'" placeholder="登録済み名義から選択／入力">';break;
+    case 'win':
+      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_win" autocomplete="off" value="'+esc(val)+'" placeholder="選択／入力">';break;
+    case 'ticketlinks':
+      var sel=Array.isArray(v)?v:[];
+      var tl=db.tickets.filter(function(t){return t.result!=='落選'||sel.indexOf(t.id)>=0})
+        .sort(function(a,b){return (a.date||'9999').localeCompare(b.date||'9999')});
+      inp=tl.length?'<div class="links">'+tl.map(function(t){
+        return '<label class="lk"><input type="checkbox" name="'+f.k+'" value="'+esc(t.id)+'"'+(sel.indexOf(t.id)>=0?' checked':'')+'><span><b>'+esc(t.title||'(無題)')+'</b><br><small class="sub">'
+          +esc([fmtD(t.date,true),t.venue,t.holder].filter(Boolean).join(' / '))+'</small></span></label>';
+      }).join('')+'</div>':'<div class="sub">チケットが未登録です。先にチケットを登録すると紐づけられます</div>';
+      break;
+    default:
+      inp='<input id="'+id+'" name="'+f.k+'" type="text" value="'+esc(val)+'"'+ph+'>';
+  }
+  return '<div class="f'+(f.half?' half':'')+'"><label for="'+id+'">'+esc(f.l)+(f.req?'<em>*</em>':'')+'</label>'+inp+'</div>';
+}
+function datalists(){
+  function dl(id,arr){return '<datalist id="'+id+'">'+arr.map(function(x){return '<option value="'+esc(x)+'">'}).join('')+'</datalist>'}
+  return dl('dl_group',db.settings.groups.map(function(g){return g.name}))
+    +dl('dl_holder',db.names.map(function(n){return n.name}))
+    +dl('dl_win',db.settings.winMethods);
+}
+function openForm(kind,id,preset){
+  var spec=FORMS[kind], item=null;
+  if(id){item=db[COLL[kind]].filter(function(x){return x.id===id})[0];if(!item)return}
+  var base=item||Object.assign({},spec.def(),preset||{});
+  // 新規の遠征は、出発日と同じ日の公演チケットをあらかじめ選択しておく
+  if(kind==='trip'&&!item&&base.depart&&!base.ticketIds){
+    base.ticketIds=db.tickets.filter(function(t){return t.date===base.depart&&t.result!=='落選'}).map(function(t){return t.id});
+  }
+  ui.form={kind:kind,id:id||null};
+  var html='<div class="sheet-head"><button class="btn-text" data-act="closeSheet">キャンセル</button>'
+    +'<b>'+esc(spec.title)+(id?'を編集':'を登録')+'</b>'
+    +'<button class="btn-text strong" data-act="saveForm">保存</button></div>'
+    +'<form class="sheet-body" id="frm" onsubmit="return false" autocomplete="off"><div class="fgrid">'
+    +spec.fields.map(function(f){return fieldHtml(f,base[f.k])}).join('')
+    +'</div>'+datalists()
+    +(id?'<div style="margin-top:22px"><button type="button" class="btn line block" data-act="delItem">この'+esc(spec.title)+'を削除</button></div>':'')
+    +'</form>';
+  openSheet(html);
+}
+function readForm(spec){
+  var o={}, form=$('#frm');
+  spec.fields.forEach(function(f){
+    if(f.t==='ticketlinks'){
+      o[f.k]=Array.prototype.map.call(form.querySelectorAll('input[name="'+f.k+'"]:checked'),function(e){return e.value});
+      return;
+    }
+    var el=form.elements[f.k], v=el?String(el.value).trim():'';
+    if(f.t==='number'){v=(v===''||!isFinite(Number(v)))?'':Math.max(0,Math.floor(Number(v)))}
+    if(f.k==='renewMonth'&&v!=='')v=Number(v);
+    o[f.k]=v;
+  });
+  return o;
+}
+
+/* ---------- F. 各画面の描画 ---------- */
+var VIEWS={};
+var TOPSUB={cal:'ホーム',ticket:'チケット',name:'名義',trip:'遠征',money:'収支',report:'ライブレポ',set:'設定'};
+
+/* 予定(チケット・遠征)を日付ごとにまとめる */
+function buildEvents(){
+  var ev={};
+  function push(d,e){(ev[d]=ev[d]||[]).push(e)}
+  db.tickets.forEach(function(t){
+    if(!parseD(t.date)||t.result==='落選')return;
+    push(t.date,{type:'ticket',id:t.id,title:t.title||'(無題)',sub:[t.time,t.venue].filter(Boolean).join(' '),color:groupColor(t.group),
+      dim:t.attend==='不参戦'||t.status==='不参戦'});
+  });
+  db.trips.forEach(function(t){
+    var a=parseD(t.depart);if(!a)return;
+    var b=parseD(t.returnDate)||a;if(b<a)b=a;
+    var d=new Date(a.getFullYear(),a.getMonth(),a.getDate()),n=0;
+    while(d<=b&&n<90){
+      var s=ymd(d), tag=(s===t.depart?'出発':'')+(s===t.returnDate?(s===t.depart?'・帰宅':'帰宅'):'');
+      push(s,{type:'trip',id:t.id,title:t.name||'(遠征)',sub:[tag,t.hotel?'🏨 '+t.hotel:''].filter(Boolean).join(' '),color:'var(--primary)'});
+      d.setDate(d.getDate()+1);n++;
+    }
+  });
+  return ev;
+}
+function liveOK(x){return x.attend!=='不参戦'&&x.status!=='不参戦'&&x.result!=='落選'}
+/* チケット金額: 金額・手数料はどちらも「1枚あたり」。表示・集計は手数料込 */
+function tkCount(t){var c=Number(t.count);return (t.count===''||t.count==null||!isFinite(c)||c<1)?1:c}
+/* 1枚あたり(手数料込) = 金額 + 1枚の手数料 + 1申込の手数料÷枚数。合計は端数が出ないよう別計算 */
+function tkUnit(t){return num(t.price)+num(t.fee)+num(t.orderFee)/tkCount(t)}
+function tkTotal(t){return (num(t.price)+num(t.fee))*tkCount(t)+num(t.orderFee)}
+/* 遠征 ⇔ チケットの紐づけ */
+function linkedTickets(trip){
+  var ids=Array.isArray(trip.ticketIds)?trip.ticketIds:[];
+  return ids.map(function(id){return db.tickets.filter(function(t){return t.id===id})[0]}).filter(Boolean)
+    .sort(function(a,b){return (a.date||'').localeCompare(b.date||'')});
+}
+function tripsOf(ticket){
+  return db.trips.filter(function(tr){return Array.isArray(tr.ticketIds)&&tr.ticketIds.indexOf(ticket.id)>=0});
+}
+function tripOverlapsMonth(t,ym){
+  if(!t.depart)return false;
+  var end=t.returnDate||t.depart;
+  return t.depart<=ym+'-31'&&end>=ym+'-01';
+}
+/* 勝率の自動集計:
+   チケット1件=1回の申込。申込結果が「落選」なら落選、それ以外は当選として数える。
+   チケットの名義が登録済みの名義と一致すれば、その名義(とグループ)に加算。
+   名義の「過去の当選数/落選数」はアプリ導入前の分として上乗せする。 */
+function calcStats(){
+  var byName={}, groups={}, ow=0, ol=0;
+  function addG(g,w,l){g=g||'未設定';var o=groups[g]||(groups[g]={w:0,l:0});o.w+=w;o.l+=l}
+  db.names.forEach(function(n){
+    var w=num(n.wins), l=num(n.losses);
+    byName[n.name]={w:w,l:l};addG(n.group,w,l);ow+=w;ol+=l;
+  });
+  db.tickets.forEach(function(t){
+    var w=t.result==='落選'?0:1, l=1-w, bn=byName[t.holder];
+    if(bn){bn.w+=w;bn.l+=l;var nm=db.names.filter(function(n){return n.name===t.holder})[0];addG(nm?nm.group:t.group,w,l)}
+    else addG(t.group,w,l);
+    ow+=w;ol+=l;
+  });
+  var gl=Object.keys(groups).map(function(g){return {g:g,w:groups[g].w,l:groups[g].l,r:rate(groups[g].w,groups[g].l)}})
+    .filter(function(o){return o.w+o.l>0})
+    .sort(function(a,b){return b.r-a.r});
+  return {overall:{w:ow,l:ol,r:rate(ow,ol)},groups:gl,byName:byName};
+}
+function moneyBalance(){var b=0;db.money.forEach(function(m){b+=(m.type==='収入'?1:-1)*num(m.amount)});return b}
+
+/* ---- ホーム(ダッシュボード+カレンダー) ---- */
+function viewDash(){
+  var t=todayStr(), now=new Date(), ym=t.slice(0,7), yr=t.slice(0,4);
+  var upSet={};
+  db.tickets.forEach(function(x){if((x.date||'')>=t&&liveOK(x))upSet[x.date+'|'+x.title]=x});
+  var ups=Object.keys(upSet).map(function(k){return upSet[k]}).sort(function(a,b){return a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||'')});
+  var tripsM=db.trips.filter(function(x){return tripOverlapsMonth(x,ym)}).length;
+  var attSet={};
+  db.tickets.forEach(function(x){if(x.attend==='参戦'&&x.status!=='不参戦'&&x.result!=='落選'&&(x.date||'').slice(0,4)===yr&&x.date<=t)attSet[x.date+'|'+x.title]=1});
+  var att=Object.keys(attSet).length, os=calcStats().overall, bal=moneyBalance();
+  var h='';
+  var total=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length;
+  var days=db.settings.lastBackup?Math.floor((Date.now()-db.settings.lastBackup)/86400000):null;
+  if(total>0&&(days==null||days>=30)){
+    h+='<div class="banner" data-act="tab" data-v="set" style="cursor:pointer">💾 '+(days==null?'まだバックアップがありません':'最後のバックアップから'+days+'日経っています')+'。タップして設定へ</div>';
+  }
+  if(ups.length){
+    var n=ups[0], dd=diffDays(t,n.date);
+    h+='<div class="card next tap" data-act="edit" data-kind="ticket" data-id="'+esc(n.id)+'">'
+      +'<div class="row between"><div class="sub">次の公演</div><div style="font-weight:800;font-size:20px">'+(dd===0?'今日!':'あと'+dd+'日')+'</div></div>'
+      +'<div class="ttl" style="margin-top:2px">'+esc(n.title)+'</div>'
+      +'<div class="meta">'+fmtD(n.date,true)+' '+esc(n.time||'')+' '+esc(n.venue||'')+'</div></div>';
+  }
+  h+='<div class="stats">'
+    +'<div class="stat" data-act="tab" data-v="ticket"><b>'+ups.length+'件</b><span>今後の公演</span></div>'
+    +'<div class="stat" data-act="tab" data-v="trip"><b>'+tripsM+'件</b><span>今月の遠征</span></div>'
+    +'<div class="stat" data-act="tab" data-v="ticket"><b>'+att+'回</b><span>今年の参戦</span></div>'
+    +'<div class="stat" data-act="tab" data-v="money"><b class="'+(bal<0?'neg':'')+'" style="'+(bal<0?'':'')+'">'+yen(bal)+'</b><span>収支合計</span></div>'
+    +'<div class="stat" data-act="tab" data-v="name"><b>'+db.names.length+'</b><span>登録名義数</span></div>'
+    +'<div class="stat" data-act="tab" data-v="name"><b>'+fmtRate(os.r)+'</b><span>勝率</span></div></div>';
+  // 更新月の名義
+  var curM=now.getMonth()+1, nextM=curM%12+1;
+  var renew=db.names.filter(function(n){return Number(n.renewMonth)===curM||Number(n.renewMonth)===nextM});
+  if(renew.length){
+    h+='<div class="card"><h3>🔔 会員更新が近い名義</h3>'+renew.map(function(n){
+      return '<div class="row between" style="padding:4px 0"><span>'+esc(n.name)+' '+gchip(n.group)+'</span><b class="'+(Number(n.renewMonth)===curM?'neg':'')+'">'+n.renewMonth+'月'+(n.fee!==''&&n.fee!=null?' / '+yen(n.fee):'')+'</b></div>';
+    }).join('')+'</div>';
+  }
+  h+='<div class="card"><h3>🎨 グループカラー</h3><div class="glegend">'
+    +(db.settings.groups.length?db.settings.groups.map(function(g){return gchip(g.name)}).join(''):'<span class="sub">設定で追加できます</span>')
+    +'</div></div>';
   return h;
 }
-
-function render() {
-  const cats = allCats();
-  if (f.who && !(f.who.startsWith('m:') ? member(f.who.slice(2)) : group(f.who.slice(2)))) f.who = '';
-  if (f.cat && !cats.includes(f.cat)) f.cat = '';
-  const kinds = [['all', 'すべて'], ['quote', '発言'], ['thought', '思考']];
-  $('filters').innerHTML =
-    [['list', 'カード順'], ['people', '発言者別']].map(([k, l]) => `<button class="chip" data-view="${k}" aria-pressed="${f.view === k}">${l}</button>`).join('') +
-    '<span class="sep"></span>' +
-    (f.view === 'people' ? '' : kinds.map(([k, l]) => `<button class="chip" data-kind="${k}" aria-pressed="${f.kind === k}">${l}</button>`).join('') + '<span class="sep"></span>') +
-    `<button class="chip" data-cat="" aria-pressed="${f.cat === ''}">全カテゴリ</button>` +
-    cats.map(c => `<button class="chip" data-cat="${esc(c)}" aria-pressed="${f.cat === c}">${esc(c)}</button>`).join('');
-  $('whoSel').innerHTML = memberOpts(f.who, true);
-  $('dlCat').innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
-  $('dlWho').innerHTML = db.members.map(m => `<option value="${esc(m.name)}" label="${esc(group(m.groupId)?.name || '')}">`).join('');
-  $('dlGroup').innerHTML = db.groups.map(g => `<option value="${esc(g.name)}">`).join('');
-  $('dlSource').innerHTML = [...new Set(db.cards.map(c => c.source).filter(Boolean))].map(s => `<option value="${esc(s)}">`).join('');
-
-  const words = f.q.toLowerCase().split(/\s+/).filter(Boolean);
-  const inWho = c => {
-    if (!f.who) return true;
-    const m = member(c.memberId);
-    return f.who.startsWith('m:') ? c.memberId === f.who.slice(2) : !!m && m.groupId === f.who.slice(2);
-  };
-  const list = db.cards.filter(c =>
-    (f.view === 'people' ? c.kind === 'quote' : (f.kind === 'all' || c.kind === f.kind)) && (!f.cat || c.category === f.cat) && inWho(c) &&
-    words.every(w => [c.title, c.body, c.note, c.category, c.source, member(c.memberId)?.name].join('\n').toLowerCase().includes(w))
-  ).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.updated || 0) - (a.updated || 0));
-
-  $('count').textContent = `${list.length} / ${db.cards.length} 件`; updateBk();
-  const cardHtml = c => {
-    const q = c.kind === 'quote', m = member(c.memberId), g = m && group(m.groupId);
-    const links = c.links.map(byId).filter(Boolean);
-    return `<article class="card ${q ? 'quote' : ''}" data-id="${esc(c.id)}">
-      <div class="meta"><span class="tag">${q ? '発言' : '思考'}</span><span>${esc(c.date)}</span>${c.category ? `<span>${esc(c.category)}</span>` : ''}</div>
-      <h2>${esc(c.title)}</h2>
-      ${q && (m || c.source) ? `<div class="who">${m ? `<button data-who="m:${esc(m.id)}">${esc(m.name)}</button>` : ''}${g ? `<span class="meta"> ${esc(g.name)}</span>` : ''}${c.source ? `<span class="meta"> ／ ${esc(c.source)}</span>` : ''}</div>` : ''}
-      ${c.body ? `<p>${esc(c.body)}</p>` : ''}
-      ${q && c.note ? `<div class="note"><div class="meta">自分の感想</div><p>${esc(c.note)}</p></div>` : ''}
-      ${links.length ? `<div class="links">${links.map(l => `<button class="${l.kind === 'quote' ? 'q' : ''}" data-goto="${esc(l.id)}" title="${esc(l.title)}">${esc((l.kind === 'quote' && member(l.memberId) ? member(l.memberId).name + '：' : '') + l.title)}</button>`).join('')}</div>` : ''}
-      <div class="acts"><button data-edit="${esc(c.id)}">編集</button>${q ? `<button data-reply="${esc(c.id)}" data-rk="thought">＋この発言への思考</button><button data-reply="${esc(c.id)}" data-rk="quote">＋関連する発言</button>` : `<button data-reply="${esc(c.id)}" data-rk="quote">＋関連する発言</button><button data-reply="${esc(c.id)}" data-rk="thought">＋続きの思考</button>`}<button class="danger" data-del="${esc(c.id)}">削除</button></div>
-    </article>`;
-  };
-  let html;
-  if (!list.length) html = `<div class="empty">${db.cards.length ? '条件に合うカードがありません。絞り込みを変更してください。' : 'まだカードがありません。「新規カード」から最初の1枚を作成してください。'}</div>`;
-  else if (f.view === 'people') {
-    const ms = [];
-    db.groups.forEach(g => db.members.filter(m => m.groupId === g.id).forEach(m => ms.push(m)));
-    db.members.filter(m => !group(m.groupId)).forEach(m => ms.push(m));
-    html = '';
-    ms.forEach(m => {
-      const cs = list.filter(c => c.memberId === m.id), g = group(m.groupId);
-      if (cs.length) html += `<h3 class="ph">${esc(m.name)}<span class="meta">${g ? esc(g.name) + ' ・ ' : ''}${cs.length}件</span></h3>` + cs.map(cardHtml).join('');
-    });
-    const none = list.filter(c => !member(c.memberId));
-    if (none.length) html += `<h3 class="ph">発言者未設定<span class="meta">${none.length}件</span></h3>` + none.map(cardHtml).join('');
-  } else html = list.map(cardHtml).join('');
-  $('grid').innerHTML = html;
-}
-
-function goTo(id) {
-  f = { kind: 'all', cat: '', who: '', q: '', view: 'list' }; $('q').value = ''; render();
-  const el = document.querySelector(`[data-id="${CSS.escape(id)}"]`);
-  if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 1600); }
-}
-
-/* ---- カードフォーム ---- */
-function syncKind() {
-  const q = document.querySelector('input[name=kind]:checked').value === 'quote';
-  $('quoteRow').hidden = !q; $('lNote').hidden = !q; syncWho();
-  $('lBody').textContent = q ? '発言内容' : '内容';
-  $('lTitle').textContent = q ? 'どんな発言？' : 'ひとことで言うと';
-  $('fTitle').placeholder = q ? '例：頑張らなくていいよ、と言われた' : '例：優しさのはずなのに、置いていかれた感じ';
-}
-function renderPick() {
-  const w = $('linkQ').value.toLowerCase().trim();
-  const cands = db.cards.filter(c => c.id !== editId && (formLinks.has(c.id) || !w || (c.title + c.body + c.note + (member(c.memberId)?.name || '')).toLowerCase().includes(w)))
-    .sort((a, b) => formLinks.has(b.id) - formLinks.has(a.id) || (b.date || '').localeCompare(a.date || ''));
-  $('linkList').innerHTML = cands.length ? cands.map(c => `<label><input type="checkbox" data-lid="${esc(c.id)}" ${formLinks.has(c.id) ? 'checked' : ''}><span class="t">${c.kind === 'quote' ? (member(c.memberId)?.name || '発言') : '思考'}</span>${esc(c.title)}</label>`).join('')
-    : '<label style="color:var(--mute)">紐づけできるカードがありません</label>';
-}
-function refreshPickers() { // 既存はプルダウンで選択、なければ「＋新しく入力」
-  const wn = $('fWho').value.trim(), cn = $('fCat').value.trim(), m = db.members.find(x => x.name === wn), cats = allCats();
-  $('sWho').innerHTML = memberOpts(m ? 'm:' + m.id : '', false) + '<option value="__new">＋新しい人物を入力</option>';
-  $('sCat').innerHTML = '<option value="">（なし）</option>' + cats.map(c => `<option value="${esc(c)}" ${c === cn ? 'selected' : ''}>${esc(c)}</option>`).join('') + '<option value="__new">＋新しいカテゴリを入力</option>';
-  if (wn && !m) $('sWho').value = '__new';
-  if (cn && !cats.includes(cn)) $('sCat').value = '__new';
-  applyNew();
-}
-function applyNew() {
-  $('fWho').hidden = $('sWho').value !== '__new';
-  $('fCat').hidden = $('sCat').value !== '__new';
-  syncWho();
-}
-$('sWho').addEventListener('change', () => {
-  const v = $('sWho').value;
-  $('fWho').value = v === '__new' ? '' : (member(v.slice(2))?.name || '');
-  applyNew(); if (v === '__new') $('fWho').focus();
-});
-$('sCat').addEventListener('change', () => {
-  const v = $('sCat').value;
-  $('fCat').value = v === '__new' ? '' : v;
-  applyNew(); if (v === '__new') $('fCat').focus();
-});
-function syncWho() {
-  const n = $('fWho').value.trim();
-  $('lGroup').hidden = !n || $('quoteRow').hidden || db.members.some(m => m.name === n);
-}
-function resolveMember() {
-  const name = $('fWho').value.trim(); if (!name) return '';
-  let m = db.members.find(x => x.name === name);
-  if (!m) {
-    const gn = $('fGroup').value.trim(); let g = gn && db.groups.find(x => x.name === gn);
-    if (gn && !g) { g = { id: uid(), name: gn }; db.groups.push(g); }
-    m = { id: uid(), name, groupId: g ? g.id : '' }; db.members.push(m);
+function viewCal(){
+  var y=ui.calY, m=ui.calM, start=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  var ev=buildEvents(), t=todayStr(), cells='';
+  for(var i=0;i<start;i++)cells+='<div class="cell empty"></div>';
+  for(var d=1;d<=days;d++){
+    var s=y+'-'+pad(m+1)+'-'+pad(d), e=ev[s]||[], dow=(start+d-1)%7;
+    var sorted=e.slice().sort(function(a,b){return a.type===b.type?0:(a.type==='ticket'?-1:1)});
+    var dots=sorted.slice(0,4).map(function(x){return '<span class="dot'+(x.type==='trip'?' trip':'')+'" style="--c:'+x.color+'"></span>'}).join('');
+    cells+='<button class="cell d'+dow+(s===t?' today':'')+(s===ui.calSel?' sel':'')+'" data-act="calSel" data-date="'+s+'">'
+      +'<span class="dn">'+d+'</span>'+(e.length?'<span class="cnt">'+e.length+'</span>':'')+'<span class="dots">'+dots+'</span></button>';
   }
-  return m.id;
+  var h='<div class="calhead"><button class="nb" data-act="calPrev" aria-label="前月">‹</button>'
+    +'<div class="row gap"><span class="mt">'+y+'年'+(m+1)+'月</span><button class="today" data-act="calToday">今日</button></div>'
+    +'<button class="nb" data-act="calNext" aria-label="翌月">›</button></div>'
+    +'<div class="cal">'+WD.map(function(w,i){return '<div class="wd d'+i+'">'+w+'</div>'}).join('')+cells+'</div>';
+  // 選択日の詳細
+  var sel=ui.calSel, se=ev[sel]||[];
+  h+='<div class="card" style="margin-top:12px"><div class="row between"><h3 style="margin:0">'+(sel?fmtD(sel,true):'')+' <span class="sub">'+se.length+'件</span></h3></div>';
+  if(se.length){
+    h+=se.map(function(x){
+      return '<div class="ev'+(x.dim?' dim':'')+'" data-act="edit" data-kind="'+x.type+'" data-id="'+esc(x.id)+'">'
+        +'<div class="bar2" style="--c:'+x.color+'"></div><div class="grow"><div style="font-weight:700">'+(x.type==='ticket'?'🎟 ':'✈️ ')+esc(x.title)+'</div>'
+        +(x.sub?'<div class="meta">'+esc(x.sub)+'</div>':'')+'</div><span class="sub">›</span></div>';
+    }).join('');
+  }else{h+='<div class="sub" style="padding:8px 0">予定はありません</div>'}
+  h+='<div class="btnrow"><button class="btn ghost sm" data-act="addOn" data-kind="ticket" data-date="'+sel+'">＋チケット</button>'
+    +'<button class="btn ghost sm" data-act="addOn" data-kind="trip" data-date="'+sel+'">＋遠征</button>'
+    +'<button class="btn ghost sm" data-act="addOn" data-kind="report" data-date="'+sel+'">＋レポ</button></div></div>';
+  return h;
 }
-function openForm(id, preset) {
-  editId = id || null;
-  const c = byId(id) || { kind: 'quote', date: today(), links: [], ...preset };
-  document.querySelector(`input[name=kind][value=${c.kind}]`).checked = true;
-  $('fTitle').value = c.title || ''; $('fBody').value = c.body || ''; $('fNote').value = c.note || '';
-  $('fSource').value = c.source || ''; $('fCat').value = c.category || ''; $('fDate').value = c.date || today();
-  $('fWho').value = member(c.memberId)?.name || ''; $('fGroup').value = ''; refreshPickers();
-  $('linkQ').value = ''; formLinks = new Set(c.links || []);
-  syncKind(); renderPick();
-  $('dlg').showModal(); $('fTitle').focus();
+/* 「ようこそ」カード: ホームの一番下に表示(データが1件も無いときだけ) */
+function welcomeCard(){
+  var total=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length;
+  if(total>0)return '';
+  return '<div class="card"><h3>🎀 ようこそ log へ</h3><div class="sub" style="line-height:1.8">'
+    +'1. ⚙️設定でグループカラーを確認<br>2. 👤名義 を登録<br>3. 🎟チケット を登録(申込結果が勝率に自動反映されます)<br>4. 画面右下の ＋ からいつでも追加できます<br><br>'
+    +'データはこの端末の中だけに保存されます。こまめにバックアップ(設定)を取りましょう。</div></div>';
 }
-$('form').addEventListener('submit', e => {
-  const kind = document.querySelector('input[name=kind]:checked').value, q = kind === 'quote';
-  const data = {
-    kind, title: $('fTitle').value.trim(), body: $('fBody').value, note: q ? $('fNote').value : '',
-    category: $('fCat').value.trim(), date: $('fDate').value || today(),
-    memberId: q ? resolveMember() : '', source: q ? $('fSource').value.trim() : '',
-    links: [...formLinks], updated: Date.now()
-  };
-  const id = editId || uid();
-  if (data.category && !db.cats.includes(data.category)) db.cats.push(data.category);
-  if (editId) db.cards = db.cards.map(c => c.id === id ? { ...c, ...data } : c);
-  else db.cards.push({ id, ...data });
-  db.cards.forEach(o => { // 紐づけは双方向
-    if (o.id === id) return;
-    const has = o.links.includes(id);
-    if (formLinks.has(o.id) && !has) o.links.push(id);
-    if (!formLinks.has(o.id) && has) o.links = o.links.filter(x => x !== id);
+VIEWS.cal=function(){return viewDash()+viewCal()+welcomeCard()};
+
+/* ---- チケット ---- */
+VIEWS.ticket=function(){
+  var sopt=[['near','近い順'],['dateDesc','日付↓新'],['dateAsc','日付↑古'],['price','金額順'],['group','グループ順'],['created','登録順']];
+  return '<div class="toolbar">'
+    +'<input class="search" type="search" enterkeyhint="search" placeholder="🔍 公演名・会場・座席・名義などで検索" value="'+esc(ui.tQ)+'" data-bind="tQ" data-rf="ticket">'
+    +'<div class="row gap" style="margin-bottom:8px">'
+    +'<select data-bind="tSort" data-rf="ticket">'+sopt.map(function(o){return '<option value="'+o[0]+'"'+(ui.tSort===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'
+    +'<select data-bind="tGroup" data-rf="ticket"><option value="">全グループ</option>'+db.settings.groups.map(function(g){return '<option'+(ui.tGroup===g.name?' selected':'')+' value="'+esc(g.name)+'">'+esc(g.name)+'</option>'}).join('')+'</select>'
+    +'<select data-bind="tPeriod" data-rf="ticket">'+[['','全期間'],['future','今後'],['past','過去']].map(function(o){return '<option value="'+o[0]+'"'+(ui.tPeriod===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'
+    +'</div>'
+    +'<div class="chips"><button class="'+(ui.tStatus===''?'on':'')+'" data-act="setUi" data-k="tStatus" data-v="">すべて</button>'
+    +STATUSES.map(function(s){return '<button class="'+(ui.tStatus===s?'on':'')+'" data-act="setUi" data-k="tStatus" data-v="'+s+'">'+s+'</button>'}).join('')+'</div></div>'
+    +'<div id="tsum" class="sub" style="margin:0 2px 8px"></div><div id="tlist"></div>';
+};
+function ticketFiltered(){
+  var toks=tokens(ui.tQ), t=todayStr();
+  var list=db.tickets.filter(function(x){
+    if(ui.tStatus&&x.status!==ui.tStatus)return false;
+    if(ui.tGroup&&x.group!==ui.tGroup)return false;
+    if(ui.tPeriod==='future'&&!((x.date||'')>=t))return false;
+    if(ui.tPeriod==='past'&&!((x.date||'')&&x.date<t))return false;
+    return matchItem(x,toks);
   });
-  save(); render();
-  if (e.submitter && e.submitter.id === 'btnSaveNext') { // 発言者・出典・日付・カテゴリを残して続けて追加
-    e.preventDefault(); editId = null; formLinks = new Set();
-    $('fTitle').value = ''; $('fBody').value = ''; $('fNote').value = ''; $('linkQ').value = '';
-    refreshPickers(); renderPick(); $('fTitle').focus();
+  function dkey(x){return (x.date||'')+' '+(x.time||'')}
+  switch(ui.tSort){
+    case 'dateDesc':list.sort(function(a,b){return dkey(b).localeCompare(dkey(a))});break;
+    case 'dateAsc':list.sort(function(a,b){return dkey(a).localeCompare(dkey(b))});break;
+    case 'price':list.sort(function(a,b){return tkUnit(b)-tkUnit(a)});break;
+    case 'group':list.sort(function(a,b){return (a.group||'').localeCompare(b.group||'','ja')||dkey(a).localeCompare(dkey(b))});break;
+    case 'created':list.sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0)});break;
+    default:
+      var fut=list.filter(function(x){return (x.date||'')>=t}).sort(function(a,b){return dkey(a).localeCompare(dkey(b))});
+      var past=list.filter(function(x){return !((x.date||'')>=t)}).sort(function(a,b){return dkey(b).localeCompare(dkey(a))});
+      list=fut.concat(past);
   }
-});
-$('fWho').addEventListener('input', syncWho);
-$('linkList').addEventListener('change', e => { const id = e.target.dataset.lid; if (id) e.target.checked ? formLinks.add(id) : formLinks.delete(id); });
-$('linkQ').addEventListener('input', renderPick);
-document.querySelectorAll('input[name=kind]').forEach(r => r.addEventListener('change', syncKind));
-$('btnCancel').onclick = () => $('dlg').close();
-$('btnNew').onclick = () => openForm();
-
-/* ---- 管理（人物・所属 / カテゴリ / 出典） ---- */
-function countBy(key) { const m = new Map(); db.cards.forEach(c => { if (c[key]) m.set(c[key], (m.get(c[key]) || 0) + 1); }); return m; }
-function rename(key, old, nw) {
-  if (!nw || nw === old) return;
-  db.cards.forEach(c => { if (c[key] === old) c[key] = nw; });
-  if (key === 'category') db.cats = [...new Set(db.cats.map(c => c === old ? nw : c))];
+  return list;
 }
-function renderMaster() {
-  $('mTabs').innerHTML = [['people', '人物・所属'], ['cat', 'ベクトル / カテゴリ'], ['src', '出典']]
-    .map(([k, l]) => `<button class="chip" data-tab="${k}" aria-pressed="${mTab === k}">${l}</button>`).join('');
-  $('addPeople').hidden = mTab !== 'people'; $('addCat').hidden = mTab !== 'cat';
-  if (mTab !== 'people') {
-    const isCat = mTab === 'cat', cnt = countBy(isCat ? 'category' : 'source');
-    const names = isCat ? allCats() : [...cnt.keys()].sort((a, b) => a.localeCompare(b, 'ja'));
-    const [nk, dk] = isCat ? ['cname', 'cdel'] : ['sname', 'sdel'];
-    $('masterBody').innerHTML = (names.length ? names.map(n => `<div class="mrow c"><input data-${nk}="${esc(n)}" value="${esc(n)}" aria-label="名前"><span class="meta">${cnt.get(n) || 0}件</span><button class="danger" data-${dk}="${esc(n)}">削除</button></div>`).join('')
-      : '<div class="empty" style="padding:20px 0">まだありません</div>') +
-      '<p class="meta" style="margin-top:12px">名前を書き換えると、使っているカードすべてに反映されます。削除してもカードは残り、この項目だけ外れます。</p>';
+function ticketCard(x){
+  var lost=x.result==='落選';
+  var c=groupColor(x.group), dim=(lost||x.status==='不参戦'||x.attend==='不参戦')?' dim':'', link=safeUrl(x.qr);
+  var h='<div class="card tk tap'+dim+'" style="--c:'+esc(c)+'" data-act="edit" data-kind="ticket" data-id="'+esc(x.id)+'">'
+    +'<div class="row between">'+(gchip(x.group)||'<span class="sub">グループ未設定</span>')
+    +(lost?'<span class="badge" style="--b:#64748b">落選</span>':'<span class="badge" style="--b:'+(STATUS_COLOR[x.status]||'#94a3b8')+'">'+esc(x.status||'—')+'</span>')+'</div>'
+    +'<div class="ttl">'+esc(x.title)+'</div>';
+  if(x.date||x.time)h+='<div class="meta">📅 '+fmtD(x.date,true)+' '+esc(x.time||'')+'</div>';
+  if(x.venue||x.pref)h+='<div class="meta">📍 '+esc(x.venue||'')+(x.pref?' ('+esc(x.pref)+')':'')+'</div>';
+  var pills='';
+  if(x.seat)pills+='<button class="pill" data-act="copy" data-copy="'+esc(x.seat)+'">🪑 '+esc(x.seat)+' ⧉</button>';
+  if(x.gate)pills+='<button class="pill" data-act="copy" data-copy="'+esc(x.gate)+'">🚪 '+esc(x.gate)+' ⧉</button>';
+  if(pills)h+='<div>'+pills+'</div>';
+  // 金額: 1枚あたり手数料込を大きく、内訳と枚数合計を補足表示
+  if(['price','fee','orderFee'].some(function(k){return x[k]!==''&&x[k]!=null})){
+    var cnt=tkCount(x), parts=[];
+    if(x.price!==''&&x.price!=null)parts.push(yen(x.price));
+    if(num(x.fee)>0)parts.push('手数料'+yen(x.fee));
+    if(num(x.orderFee)>0)parts.push('申込手数料'+yen(x.orderFee)+(cnt>1?'÷'+cnt+'枚':''));
+    h+='<div class="meta">💴 1枚 <span class="price">'+yen(tkUnit(x))+'</span>(手数料込)'
+      +(cnt>1?' ／ <span style="white-space:nowrap">'+cnt+'枚で <span class="price">'+yen(tkTotal(x))+'</span></span>':'')+'</div>'
+      +(parts.length>1?'<div class="meta" style="margin-left:22px">内訳: '+parts.join(' + ')+'</div>':'');
+  }
+  var info=[];
+  if(x.count!==''&&x.count!=null)info.push(x.count+'枚');
+  if(x.holder)info.push('名義: '+esc(x.holder));
+  if(x.winMethod)info.push(esc(x.winMethod));
+  if(info.length)h+='<div class="meta">🎟 '+info.join(' / ')+'</div>';
+  var st=[];if(x.attend)st.push(esc(x.attend));if(x.companions)st.push('同行: '+esc(x.companions));
+  if(st.length)h+='<div class="meta">👥 '+st.join(' / ')+'</div>';
+  var trl=tripsOf(x);
+  if(trl.length)h+='<div class="meta">✈️ 遠征: '+trl.map(function(t){return esc(t.name)}).join(' / ')+'</div>';
+  if(x.qr){
+    h+='<div class="qr"><div class="url">'+esc(x.qr)+'</div><div class="row gap wrap">'
+      +(link?'<a class="btn sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer" data-act="noop">QRを開く</a>':'')
+      +'<button class="btn ghost sm" data-act="copy" data-copy="'+esc(x.qr)+'">リンクをコピー</button></div></div>';
+  }
+  if(x.memo)h+='<div class="meta clamp" style="margin-top:6px">📝 '+esc(x.memo)+'</div>';
+  return h+'</div>';
+}
+function renderTicketList(){
+  var list=ticketFiltered(), sum=0;
+  list.forEach(function(x){if(x.result!=='落選')sum+=tkTotal(x)});
+  var s=$('#tsum'), l=$('#tlist');if(!s||!l)return;
+  s.textContent=list.length+'件 / 合計 '+yen(sum)+'(手数料込・落選を除く)';
+  l.innerHTML=list.length?list.map(ticketCard).join(''):(db.tickets.length?'<div class="empty">条件に合うチケットがありません</div>':emptyBox('チケットがまだありません'));
+}
+
+/* ---- 名義 ---- */
+VIEWS.name=function(){
+  var cs=calcStats(), os=cs.overall, gs=cs.groups;
+  var ranked=db.names.map(function(n){var s=cs.byName[n.name]||{w:0,l:0};return {n:n,w:s.w,l:s.l,r:rate(s.w,s.l)}})
+    .filter(function(o){return o.w+o.l>0}).sort(function(a,b){return b.r-a.r||b.w-a.w});
+  var h='<div class="card"><h3>📊 勝率分析</h3><div class="row between"><div><div class="big">'+fmtRate(os.r)+'</div><div class="sub">全体勝率(当選'+os.w+' / 落選'+os.l+')</div></div></div>'
+    +'<div class="sub" style="margin-top:6px">チケットの「申込結果」と名義から自動集計しています</div>';
+  if(gs.length){
+    h+='<div class="sec"><h4>グループ別勝率</h4>'+gs.map(function(g){
+      return '<div class="brow"><div class="top"><span>'+gchip(g.g)+'</span><b>'+fmtRate(g.r)+' <span class="sub">'+g.w+'勝'+g.l+'敗</span></b></div><div class="bar"><i style="width:'+(g.r||0)+'%;background:'+esc(groupColor(g.g))+'"></i></div></div>';
+    }).join('')+'</div>';
+  }
+  h+='<div class="sec"><h4>名義別ランキング</h4>';
+  if(ranked.length){
+    h+=ranked.map(function(o,i){
+      return '<div class="rk"><div class="no">'+(i<3?['🥇','🥈','🥉'][i]:(i+1))+'</div><div class="grow"><b>'+esc(o.n.name)+'</b> '+gchip(o.n.group)+'</div>'
+        +'<div style="text-align:right"><b>'+fmtRate(o.r)+'</b><div class="sub">'+o.w+'勝'+o.l+'敗</div></div></div>';
+    }).join('');
+  }else{h+='<div class="sub">チケットを登録すると自動で表示されます(名義はチケットの「名義」欄と同じ名前で登録)</div>'}
+  h+='</div></div>'
+    +'<input class="search" type="search" enterkeyhint="search" placeholder="🔍 名義・会員番号・グループで検索" value="'+esc(ui.nQ)+'" data-bind="nQ" data-rf="name">'
+    +'<div id="nlist"></div>';
+  return h;
+}
+function renderNameList(){
+  var l=$('#nlist');if(!l)return;
+  var toks=tokens(ui.nQ);
+  var list=db.names.filter(function(n){return matchItem(n,toks)}).sort(function(a,b){return (a.group||'').localeCompare(b.group||'','ja')||(a.name||'').localeCompare(b.name||'','ja')});
+  if(!list.length){l.innerHTML=db.names.length?'<div class="empty">条件に合う名義がありません</div>':emptyBox('名義がまだありません');return}
+  var curM=new Date().getMonth()+1, cs=calcStats();
+  l.innerHTML=list.map(function(n){
+    var s=cs.byName[n.name]||{w:0,l:0}, r=rate(s.w,s.l), renew=Number(n.renewMonth)===curM;
+    var h='<div class="card tk tap" style="--c:'+esc(groupColor(n.group))+'" data-act="edit" data-kind="name" data-id="'+esc(n.id)+'">'
+      +'<div class="row between"><div class="ttl" style="margin:0">'+esc(n.name)+'</div>'+gchip(n.group)+'</div>';
+    if(n.memberNo)h+='<div class="meta">🪪 会員番号 <button class="pill" style="margin:0 0 0 4px" data-act="copy" data-copy="'+esc(n.memberNo)+'">'+esc(n.memberNo)+' ⧉</button></div>';
+    var info=[];
+    if(n.tantou)info.push('担当: '+esc(n.tantou));
+    if(n.joinDate)info.push('入会 '+fmtD(n.joinDate,true));
+    if(n.renewMonth!==''&&n.renewMonth!=null)info.push('<span class="'+(renew?'neg':'')+'">更新 '+n.renewMonth+'月'+(renew?' (今月)':'')+'</span>');
+    if(n.fee!==''&&n.fee!=null)info.push('年会費 '+yen(n.fee));
+    if(info.length)h+='<div class="meta">'+info.join(' / ')+'</div>';
+    h+='<div class="wl"><div class="c" style="padding:8px 12px"><span>当選 '+s.w+'</span></div><div class="c" style="padding:8px 12px"><span>落選 '+s.l+'</span></div></div>'
+      +'<div class="row between" style="margin-top:8px"><span class="sub">勝率</span><b style="color:var(--primary);font-size:18px">'+fmtRate(r)+'</b></div>'
+      +'<div class="bar" style="margin-top:4px"><i style="width:'+(r||0)+'%"></i></div>';
+    if(n.memo)h+='<div class="meta clamp" style="margin-top:6px">📝 '+esc(n.memo)+'</div>';
+    return h+'</div>';
+  }).join('');
+}
+
+/* ---- 遠征 ---- */
+VIEWS.trip=function(){return '<div id="tripl"></div>'};
+function renderTripList(){
+  var l=$('#tripl');if(!l)return;
+  var t=todayStr();
+  function endOf(x){return x.returnDate||x.depart||''}
+  var fut=db.trips.filter(function(x){return endOf(x)>=t}).sort(function(a,b){return (a.depart||'9999').localeCompare(b.depart||'9999')});
+  var past=db.trips.filter(function(x){return !(endOf(x)>=t)}).sort(function(a,b){return (b.depart||'').localeCompare(a.depart||'')});
+  var list=fut.concat(past);
+  if(!list.length){l.innerHTML=emptyBox('遠征がまだありません');return}
+  l.innerHTML=list.map(function(x){
+    var st='',col='#94a3b8';
+    if(x.depart){
+      if(endOf(x)<t){st='終了'}
+      else if(x.depart<=t){st='遠征中';col='#16a34a'}
+      else{st='あと'+diffDays(t,x.depart)+'日';col='var(--primary)'}
+    }
+    var h='<div class="card tap'+(st==='終了'?' dim':'')+'" data-act="edit" data-kind="trip" data-id="'+esc(x.id)+'">'
+      +'<div class="row between"><div class="ttl" style="margin:0">'+esc(x.name)+'</div>'+(st?'<span class="badge" style="--b:'+col+'">'+st+'</span>':'')+'</div>';
+    linkedTickets(x).forEach(function(t){
+      h+='<div class="meta">🎤 '+esc(t.title)+' <span class="sub">'+esc([fmtD(t.date),t.venue].filter(Boolean).join(' '))+'</span></div>';
+    });
+    if(x.show)h+='<div class="meta">🎤 '+esc(x.show)+'</div>';
+    if(x.depart||x.returnDate){
+      var n=(x.depart&&x.returnDate)?diffDays(x.depart,x.returnDate)+1:0;
+      h+='<div class="meta">📅 '+(fmtD(x.depart,true)||'未定')+' → '+(fmtD(x.returnDate,true)||'未定')+(n>0?' ('+n+'日間)':'')+'</div>';
+    }
+    if(x.venue)h+='<div class="meta">📍 '+esc(x.venue)+'</div>';
+    if(x.shinkansen)h+='<div class="meta">🚅 '+esc(x.shinkansen)+'</div>';
+    if(x.plane)h+='<div class="meta">✈️ '+esc(x.plane)+'</div>';
+    if(x.bus)h+='<div class="meta">🚌 '+esc(x.bus)+'</div>';
+    if(x.hotel||x.checkin||x.checkout){
+      var nights=(x.checkin&&x.checkout)?diffDays(x.checkin,x.checkout):0;
+      h+='<div class="meta">🏨 '+esc(x.hotel||'')+' '+(x.checkin?fmtD(x.checkin):'')+(x.checkout?' → '+fmtD(x.checkout):'')+(nights>0?' ('+nights+'泊)':'')+'</div>';
+    }
+    if(x.memo)h+='<div class="meta clamp" style="margin-top:6px">📝 '+esc(x.memo)+'</div>';
+    return h+'</div>';
+  }).join('');
+}
+
+/* ---- 収支 ---- */
+function moneyScope(){
+  var set,label;
+  if(ui.mMode==='month'){set=db.money.filter(function(x){return (x.date||'').slice(0,7)===ui.mMonth});label=ui.mMonth.slice(0,4)+'年'+Number(ui.mMonth.slice(5))+'月'}
+  else if(ui.mMode==='year'){set=db.money.filter(function(x){return (x.date||'').slice(0,4)===ui.mYear});label=ui.mYear+'年'}
+  else{set=db.money.slice();label='全期間'}
+  return {set:set,label:label};
+}
+function catBars(set){
+  var sums={},tot=0;MCATS.forEach(function(c){sums[c]=0});
+  set.forEach(function(x){if(x.type==='収入')return;var c=MCATS.indexOf(x.category)>=0?x.category:'その他';sums[c]+=num(x.amount);tot+=num(x.amount)});
+  var max=0;MCATS.forEach(function(c){if(sums[c]>max)max=sums[c]});
+  return MCATS.map(function(c){
+    return '<div class="brow"><div class="top"><span>'+c+'</span><b>'+yen(sums[c])+' <span class="sub">'+(tot?Math.round(sums[c]/tot*100):0)+'%</span></b></div><div class="bar"><i style="width:'+(max?sums[c]/max*100:0)+'%"></i></div></div>';
+  }).join('');
+}
+VIEWS.money=function(){
+  var sc=moneyScope(), set=sc.set, exp=0,inc=0,expN=0;
+  set.forEach(function(x){if(x.type==='収入')inc+=num(x.amount);else{exp+=num(x.amount);expN++}});
+  var bal=inc-exp, avg=expN?Math.round(exp/expN):0;
+  var h='<div class="seg">'+[['month','月別'],['year','年別'],['cat','カテゴリ別']].map(function(o){return '<button class="'+(ui.mMode===o[0]?'on':'')+'" data-act="setUi" data-k="mMode" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>';
+  if(ui.mMode!=='cat'){
+    h+='<div class="calhead"><button class="nb" data-act="mPrev" aria-label="前へ">‹</button><span class="mt">'+sc.label+'</span><button class="nb" data-act="mNext" aria-label="次へ">›</button></div>';
+  }else{h+='<div class="calhead"><span class="mt">'+sc.label+'</span></div>'}
+  h+='<div class="sumgrid">'
+    +'<div class="stat"><b>'+yen(exp)+'</b><span>支出合計</span></div>'
+    +'<div class="stat"><b>'+yen(inc)+'</b><span>収入合計</span></div>'
+    +'<div class="stat"><b class="'+(bal<0?'neg':'pos')+'">'+yen(bal)+'</b><span>収支</span></div>'
+    +'<div class="stat"><b>'+set.length+'件</b><span>件数 / 平均 '+yen(avg)+'</span></div></div>';
+  if(ui.mMode==='year'){
+    var ms=[],mx=0,m;
+    for(m=1;m<=12;m++){var s=0;set.forEach(function(x){if(x.type!=='収入'&&Number((x.date||'').slice(5,7))===m)s+=num(x.amount)});ms.push(s);if(s>mx)mx=s}
+    h+='<div class="card"><h3>📆 月別支出 <span class="sub">月平均 '+yen(Math.round(exp/12))+'</span></h3>'
+      +ms.map(function(v,i){return '<div class="brow"><div class="top"><span>'+(i+1)+'月</span><b>'+yen(v)+'</b></div><div class="bar"><i style="width:'+(mx?v/mx*100:0)+'%"></i></div></div>'}).join('')+'</div>';
+  }
+  h+='<div class="card"><h3>🏷 カテゴリ別支出</h3>'+catBars(set)+'</div>';
+  if(ui.mMode==='cat'){
+    h+='<div class="chips"><button class="'+(ui.mCat===''?'on':'')+'" data-act="setUi" data-k="mCat" data-v="">すべて</button>'
+      +MCATS.map(function(c){return '<button class="'+(ui.mCat===c?'on':'')+'" data-act="setUi" data-k="mCat" data-v="'+c+'">'+c+'</button>'}).join('')+'</div>';
+  }
+  var list=set.filter(function(x){return ui.mMode!=='cat'||!ui.mCat||x.category===ui.mCat}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')||(b.createdAt||0)-(a.createdAt||0)});
+  h+='<div class="card"><h3>🧾 明細 <span class="sub">'+list.length+'件</span></h3>';
+  if(list.length){
+    h+=list.map(function(x){
+      var isInc=x.type==='収入';
+      return '<div class="mrow" data-act="edit" data-kind="money" data-id="'+esc(x.id)+'"><div class="grow"><div style="font-weight:700">'+esc(x.title||x.category||'(無題)')+'</div>'
+        +'<div class="meta">'+fmtD(x.date,true)+' ・ '+esc(x.category||'')+(x.memo?' ・ '+esc(x.memo):'')+'</div></div>'
+        +'<div class="amt '+(isInc?'pos':'')+'">'+(isInc?'+':'-')+yen(x.amount)+'</div></div>';
+    }).join('');
+  }else{h+='<div class="sub" style="padding:8px 0">この期間の記録はありません。右下の＋から登録できます</div>'}
+  return h+'</div>';
+};
+
+/* ---- レポ ---- */
+VIEWS.report=function(){
+  return '<input class="search" type="search" enterkeyhint="search" placeholder="🔍 公演名・セトリ・感想で検索" value="'+esc(ui.rQ)+'" data-bind="rQ" data-rf="report"><div id="rlist"></div>';
+};
+function renderReportList(){
+  var l=$('#rlist');if(!l)return;
+  var toks=tokens(ui.rQ);
+  var list=db.reports.filter(function(x){return matchItem(x,toks)}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'')||(b.createdAt||0)-(a.createdAt||0)});
+  if(!list.length){l.innerHTML=db.reports.length?'<div class="empty">条件に合うレポがありません</div>':emptyBox('レポがまだありません');return}
+  l.innerHTML=list.map(function(x){
+    return '<div class="card tk tap" style="--c:'+esc(groupColor(x.group))+'" data-act="viewReport" data-id="'+esc(x.id)+'">'
+      +'<div class="row between">'+(gchip(x.group)||'<span></span>')+'<span class="sub">'+fmtD(x.date,true)+'</span></div>'
+      +'<div class="ttl">'+esc(x.title)+'</div>'
+      +(x.seat?'<div class="meta">🪑 '+esc(x.seat)+'</div>':'')
+      +(x.impression?'<div class="meta clamp" style="margin-top:6px">'+esc(x.impression)+'</div>':'')+'</div>';
+  }).join('');
+}
+function showReport(id){
+  var x=db.reports.filter(function(r){return r.id===id})[0];if(!x)return;
+  var lines=String(x.setlist||'').split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  function sec(t,v){return v?'<div class="sec"><h4>'+t+'</h4><div class="pre">'+esc(v)+'</div></div>':''}
+  openSheet('<div class="sheet-head"><button class="btn-text" data-act="closeSheet">閉じる</button><b>ライブレポ</b>'
+    +'<button class="btn-text strong" data-act="edit" data-kind="report" data-id="'+esc(x.id)+'">編集</button></div>'
+    +'<div class="sheet-body"><div class="row between">'+(gchip(x.group)||'<span></span>')+'<span class="sub">'+fmtD(x.date,true)+'</span></div>'
+    +'<div class="ttl" style="font-size:19px">'+esc(x.title)+'</div>'
+    +(x.seat?'<div class="meta">🪑 '+esc(x.seat)+'</div>':'')
+    +(lines.length?'<div class="sec"><div class="row between"><h4>セトリ('+lines.length+'曲)</h4><button class="btn ghost sm" data-act="copy" data-copy="'+esc(lines.map(function(s,i){return (i+1)+'. '+s}).join('\n'))+'">コピー</button></div><ol class="set">'+lines.map(function(s){return '<li>'+esc(s)+'</li>'}).join('')+'</ol></div>':'')
+    +sec('MCメモ',x.mc)+sec('感想',x.impression)+sec('メモ',x.memo)+'</div>');
+}
+
+/* ---- 設定 ---- */
+VIEWS.set=function(){
+  var s=db.settings, bak=store.get(BAK), raw=store.get(KEY)||'';
+  var cnt=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length;
+  var bakInfo='なし';
+  if(bak){try{var b=JSON.parse(bak);bakInfo='あり('+['tickets','names','trips','money','reports'].reduce(function(a,k){return a+(Array.isArray(b[k])?b[k].length:0)},0)+'件)'}catch(e){bakInfo='あり'}}
+  var h='<div class="card"><h3>🎨 外観</h3><div class="sub" style="margin-bottom:4px">テーマ</div><div class="seg">'
+    +[['auto','自動'],['light','ライト'],['dark','ダーク']].map(function(o){return '<button class="'+(s.theme===o[0]?'on':'')+'" data-act="setTheme" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>'
+    +'<div class="sub" style="margin-bottom:4px">アクセントカラー</div><div class="seg">'
+    +Object.keys(ACCENTS).map(function(k){return '<button class="'+(s.accent===k?'on':'')+'" data-act="setAccent" data-v="'+k+'">'+ACCENTS[k].n+'</button>'}).join('')+'</div></div>';
+  h+='<div class="card"><h3>🌈 グループカラー</h3>'
+    +(s.groups.length?s.groups.map(function(g,i){
+      return '<div class="grow-row"><input type="color" value="'+esc(g.color)+'" data-gc="'+i+'" aria-label="'+esc(g.name)+'の色"><span class="nm">'+esc(g.name)+'</span>'
+        +'<button class="btn ghost sm" data-act="gRename" data-i="'+i+'">名前変更</button>'
+        +'<button class="btn line sm" data-act="gDel" data-i="'+i+'">削除</button></div>';
+    }).join(''):'<div class="sub">グループがありません</div>')
+    +'<div class="grow-row" style="margin-top:6px"><input type="color" id="gColor" value="'+NEW_COLORS[s.groups.length%NEW_COLORS.length]+'" aria-label="新しいグループの色">'
+    +'<input type="text" id="gName" placeholder="グループ名を追加" style="flex:1"><button class="btn sm" data-act="gAdd">追加</button></div>'
+    +'<div class="sub" style="margin-top:6px">色は左の丸をタップして変更。名前を変えると、チケット・名義・レポのグループ名も一緒に変わります。削除してもデータは消えません(色が灰色になります)</div></div>';
+  h+='<div class="card"><h3>🏷 当選方法の候補</h3><div class="sub" style="margin-bottom:6px">チケット入力の「当選方法」で選べる候補です</div>'
+    +(s.winMethods.length?'<div class="glegend">'+s.winMethods.map(function(w,i){
+      return '<span class="chip" style="padding-right:4px">'+esc(w)+'<button data-act="wmDel" data-i="'+i+'" aria-label="'+esc(w)+'を削除" style="width:28px;height:28px;font-size:16px;color:var(--sub)">×</button></span>';
+    }).join('')+'</div>':'<div class="sub">候補がありません</div>')
+    +'<div class="grow-row" style="margin-top:8px"><input type="text" id="wmName" placeholder="候補を追加(例: ファンクラブ先行)" style="flex:1"><button class="btn sm" data-act="wmAdd">追加</button></div></div>';
+  h+='<div class="card"><h3>💾 データ管理</h3>'
+    +'<div class="kv"><span>登録データ</span><b>'+cnt+'件</b></div>'
+    +'<div class="kv"><span>使用容量(目安)</span><b>約'+Math.max(1,Math.round(raw.length*2/1024))+'KB / 約5000KB</b></div>'
+    +'<div class="kv"><span>最終バックアップ</span><b>'+(s.lastBackup?new Date(s.lastBackup).toLocaleString('ja-JP'):'未実施')+'</b></div>'
+    +'<div class="kv"><span>自動バックアップ(1つ前の状態)</span><b>'+bakInfo+'</b></div>'
+    +(storageOk?'':'<div class="banner neg" style="margin-top:8px">この環境ではデータを保存できません(プライベートブラウズ等)。バックアップを必ず取ってください</div>')
+    +'<div class="btnrow"><button class="btn" data-act="exportJson">⬇️ JSONをダウンロード</button><button class="btn ghost" data-act="shareJson">📤 共有で保存</button><button class="btn ghost" data-act="copyJson">📋 JSONをコピー</button></div>'
+    +'<div class="btnrow"><button class="btn ghost" data-act="importFile">📁 ファイルから復元</button><button class="btn ghost" data-act="importPaste">📝 貼り付けて復元</button>'
+    +(bak?'<button class="btn ghost" data-act="restoreAuto">⏪ 自動バックアップから復元</button>':'')+'</div>'
+    +'<div class="btnrow"><button class="btn line" data-act="wipeAll">🗑 データ全削除</button></div></div>';
+  h+='<div class="card"><h3>📱 ホーム画面に追加</h3><div class="sub" style="line-height:1.7">'
+    +'iPhone: Safariの共有ボタン → 「ホーム画面に追加」<br>Android: Chromeのメニュー → 「ホーム画面に追加」または「アプリをインストール」<br>'
+    +'※ iPhoneのSafariは、ホーム画面に追加せず長期間開かないとデータが消えることがあります。ホーム画面から使うのがおすすめです。</div>'
+    +(deferredInstall?'<div class="btnrow"><button class="btn" data-act="install">アプリとしてインストール</button></div>':'')+'</div>';
+  h+='<div class="card"><h3>🔒 プライバシー</h3><div class="sub" style="line-height:1.7">外部通信・API・広告・トラッキングは一切ありません。データはこの端末のLocalStorageにだけ保存され、どこにも送信されません。</div></div>';
+  return h;
+};
+
+/* ---- 描画の本体 ---- */
+function render(keepScroll){
+  var v=$('#view'), st=keepScroll?v.scrollTop:0;
+  Array.prototype.forEach.call(document.querySelectorAll('#nav button'),function(b){b.classList.toggle('on',b.getAttribute('data-v')===ui.tab)});
+  $('#topSub').textContent=TOPSUB[ui.tab]||'';
+  $('#fab').classList.toggle('hide',ui.tab==='set');
+  v.innerHTML=VIEWS[ui.tab]();
+  if(ui.tab==='ticket')renderTicketList();
+  if(ui.tab==='name')renderNameList();
+  if(ui.tab==='trip')renderTripList();
+  if(ui.tab==='report')renderReportList();
+  v.scrollTop=st;
+}
+var REFRESH={ticket:renderTicketList,name:renderNameList,report:renderReportList};
+
+/* ---------- G. アクション ---------- */
+var A={};
+A.noop=function(){};
+A.tab=function(d){ui.tab=d.v;render(false)};
+A.closeSheet=function(){closeSheet()};
+A.dlgYes=function(){closeDlg(true)};
+A.dlgNo=function(){closeDlg(false)};
+A.setUi=function(d){ui[d.k]=d.v;render(true)};
+A.copy=function(d){copyText(d.copy).then(function(ok){toast(ok?'コピーしました':'コピーできませんでした')})};
+
+/* カレンダー */
+function fixSel(){
+  var t=new Date();
+  ui.calSel=(t.getFullYear()===ui.calY&&t.getMonth()===ui.calM)?todayStr():ui.calY+'-'+pad(ui.calM+1)+'-01';
+}
+A.calPrev=function(){ui.calM--;if(ui.calM<0){ui.calM=11;ui.calY--}fixSel();render(true)};
+A.calNext=function(){ui.calM++;if(ui.calM>11){ui.calM=0;ui.calY++}fixSel();render(true)};
+A.calToday=function(){var t=new Date();ui.calY=t.getFullYear();ui.calM=t.getMonth();ui.calSel=todayStr();render(true)};
+A.calSel=function(d){ui.calSel=d.date;render(true)};
+A.addOn=function(d){
+  var key=d.kind==='trip'?'depart':'date', p={};p[key]=d.date;
+  openForm(d.kind,null,p);
+};
+
+/* 追加・編集・削除 */
+A.fab=function(){
+  if(ui.tab==='cal'){
+    var dt=ui.calSel||todayStr();
+    openSheet('<div class="sheet-head"><button class="btn-text" data-act="closeSheet">閉じる</button><b>追加する</b><span style="width:56px"></span></div>'
+      +'<div class="sheet-body"><div class="sub" style="margin-bottom:10px">'+fmtD(dt,true)+' に追加します</div><div class="choose">'
+      +'<button data-act="addOn" data-kind="ticket" data-date="'+dt+'"><span>🎟</span>チケット</button>'
+      +'<button data-act="addOn" data-kind="trip" data-date="'+dt+'"><span>✈️</span>遠征</button>'
+      +'<button data-act="addOn" data-kind="money" data-date="'+dt+'"><span>💰</span>収支</button>'
+      +'<button data-act="addOn" data-kind="report" data-date="'+dt+'"><span>📝</span>レポ</button>'
+      +'<button data-act="addOn" data-kind="name" data-date="'+dt+'"><span>👤</span>名義</button></div></div>');
     return;
   }
-  const gopt = sel => '<option value="">未所属</option>' + db.groups.map(g => `<option value="${esc(g.id)}" ${g.id === sel ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
-  const row = m => `<div class="mrow"><input data-mname="${esc(m.id)}" value="${esc(m.name)}" aria-label="人物名"><select data-mgroup="${esc(m.id)}">${gopt(m.groupId)}</select><button class="danger" data-mdel="${esc(m.id)}">削除</button></div>`;
-  let h = db.groups.map(g => `<section class="msec"><div class="mrow g"><input data-gname="${esc(g.id)}" value="${esc(g.name)}" aria-label="所属名"><button class="danger" data-gdel="${esc(g.id)}">所属削除</button></div>${db.members.filter(m => m.groupId === g.id).map(row).join('')}</section>`).join('');
-  const un = db.members.filter(m => !group(m.groupId));
-  if (un.length) h += `<section class="msec"><div class="meta">未所属</div>${un.map(row).join('')}</section>`;
-  $('masterBody').innerHTML = h || '<div class="empty" style="padding:20px 0">所属がありません。下から追加してください。</div>';
-  $('nmGroup').innerHTML = gopt($('nmGroup').value);
-}
-$('btnMaster').onclick = () => { renderMaster(); $('master').showModal(); };
-$('mClose').onclick = () => $('master').close();
-$('master').addEventListener('close', () => {
-  render();
-  if ($('dlg').open) refreshPickers();
-});
-$('master').addEventListener('change', e => {
-  const d = e.target.dataset, v = e.target.value.trim();
-  if (d.mname && v) member(d.mname).name = v;
-  if (d.gname && v) group(d.gname).name = v;
-  if (d.mgroup) member(d.mgroup).groupId = e.target.value;
-  if (d.cname !== undefined) rename('category', d.cname, v);
-  if (d.sname !== undefined) rename('source', d.sname, v);
-  save(); renderMaster();
-});
-$('master').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  const d = b.dataset;
-  if (d.tab) { mTab = d.tab; renderMaster(); return; }
-  if (b.id === 'ngAdd' && $('ngName').value.trim()) { db.groups.push({ id: uid(), name: $('ngName').value.trim() }); $('ngName').value = ''; }
-  else if (b.id === 'nmAdd' && $('nmName').value.trim()) { db.members.push({ id: uid(), name: $('nmName').value.trim(), groupId: $('nmGroup').value }); $('nmName').value = ''; }
-  else if (b.id === 'ncAdd' && $('ncName').value.trim()) { const n = $('ncName').value.trim(); if (!db.cats.includes(n)) db.cats.push(n); $('ncName').value = ''; }
-  else if (d.mdel && confirm('この人物を削除しますか？発言カードの発言者は「指定なし」になります。')) { db.members = db.members.filter(m => m.id !== d.mdel); db.cards.forEach(c => { if (c.memberId === d.mdel) c.memberId = ''; }); }
-  else if (d.gdel && confirm('この所属を削除しますか？所属している人物は「未所属」になります。')) { db.groups = db.groups.filter(g => g.id !== d.gdel); db.members.forEach(m => { if (m.groupId === d.gdel) m.groupId = ''; }); }
-  else if (d.cdel !== undefined && confirm(`カテゴリ「${d.cdel}」を削除しますか？使っているカードからこのカテゴリが外れます。`)) { db.cats = db.cats.filter(c => c !== d.cdel); db.cards.forEach(c => { if (c.category === d.cdel) c.category = ''; }); }
-  else if (d.sdel !== undefined && confirm(`出典「${d.sdel}」を削除しますか？使っているカードからこの出典が外れます。`)) { db.cards.forEach(c => { if (c.source === d.sdel) c.source = ''; }); }
-  else return;
-  save(); renderMaster();
-});
-
-/* ---- 一覧の操作 ---- */
-$('q').addEventListener('input', e => { f.q = e.target.value; render(); });
-$('whoSel').addEventListener('change', e => { f.who = e.target.value; render(); });
-$('filters').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if ('view' in b.dataset) f.view = b.dataset.view; else if ('kind' in b.dataset) f.kind = b.dataset.kind; else f.cat = b.dataset.cat;
-  render();
-});
-$('grid').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  const d = b.dataset;
-  if (d.goto) goTo(d.goto);
-  if (d.who) { f.who = d.who; f.kind = 'all'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-  if (d.edit) openForm(d.edit);
-  if (d.reply) openForm(null, { kind: d.rk || 'thought', links: [d.reply] });
-  if (d.del && confirm('このカードを削除しますか？（紐づけも解除されます）')) {
-    db.cards = db.cards.filter(c => c.id !== d.del);
-    db.cards.forEach(c => c.links = c.links.filter(x => x !== d.del));
-    save(); render();
-  }
-});
-
-/* ---- 書き出し / 読み込み ---- */
-function updateBk() {
-  let d = ''; try { d = localStorage.getItem('thoughtcards.backup') || ''; } catch (e) {}
-  const el = $('bk');
-  if (!db.cards.length) { el.textContent = ''; return; }
-  el.textContent = d ? `最終バックアップ ${d}` : '未バックアップ';
-  el.className = (!d || Date.now() - new Date(d) > 30 * 864e5) ? 'due' : '';
-}
-$('btnExport').onclick = async () => {
-  const text = JSON.stringify({ app: 'thought-cards', version: 2, exported: new Date().toISOString(), ...db }, null, 2);
-  const name = `goroku-saishu-${today()}.json`;
-  const done = () => { try { localStorage.setItem('thoughtcards.backup', today()); } catch (e) {} updateBk(); };
-  try { // 公開ページ内では、保存の許可ダイアログ経由で書き出す
-    const dl = window.claude && await window.claude.use('downloads');
-    if (dl) { await dl.save({ filename: name, data: text }); done(); return; }
-  } catch (e) { if (e && e.code === 'declined') return; }
-  try { // スマホは共有シート（「ファイルに保存」など）を使う
-    const file = new File([text], name, { type: 'application/json' });
-    if (/Android|iPhone|iPad/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: name }); done(); return;
-    }
-  } catch (e) { if (e && e.name === 'AbortError') return; }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000); done();
+  openForm(ui.tab,null);
 };
-$('btnHelp').onclick = () => $('help').showModal();
-$('hClose').onclick = () => $('help').close();
-$('btnFab').onclick = () => openForm();
-$('btnImport').onclick = () => $('file').click();
-$('file').addEventListener('change', async e => {
-  const file = e.target.files[0]; e.target.value = '';
-  if (!file) return;
-  try {
-    const j = JSON.parse(await file.text());
-    const inc = norm(Array.isArray(j) ? { cards: j } : { cards: j.cards, groups: j.groups, members: j.members });
-    if (!Array.isArray(j) && !Array.isArray(j.cards)) throw new Error('cards not found');
-    const merge = (key, items) => { const m = new Map(db[key].map(x => [x.id, x])); items.forEach(x => m.set(x.id, x)); db[key] = [...m.values()]; };
-    const before = db.cards.length;
-    if (!Array.isArray(j)) db.cats = [...new Set([...db.cats, ...(Array.isArray(j.cats) ? j.cats : [])])];
-    merge('groups', inc.groups); merge('members', inc.members); merge('cards', inc.cards);
-    save(); render();
-    alert(`読み込み完了：カード ${inc.cards.length} 件（新規 ${db.cards.length - before} 件、上書き ${inc.cards.length - (db.cards.length - before)} 件）`);
-  } catch (err) { alert('読み込めませんでした。このアプリで書き出した JSON ファイルを選択してください。'); }
-});
+A.edit=function(d){openForm(d.kind,d.id)};
+A.viewReport=function(d){showReport(d.id)};
+A.saveForm=function(){
+  if(!ui.form)return;
+  var kind=ui.form.kind, id=ui.form.id, spec=FORMS[kind], o=readForm(spec);
+  var miss=spec.fields.filter(function(f){return f.req&&(o[f.k]===''||o[f.k]==null)})[0];
+  if(miss){toast(miss.l+'を入力してください');return}
+  var coll=db[COLL[kind]], item, isNew=!id;
+  if(id){item=coll.filter(function(x){return x.id===id})[0];if(!item){closeSheet();return}Object.assign(item,o);item.updatedAt=Date.now()}
+  else{item=Object.assign({id:uid(),createdAt:Date.now()},o);coll.push(item)}
+  if(o.group)ensureGroup(o.group);
+  if(kind==='ticket'&&o.winMethod&&db.settings.winMethods.indexOf(o.winMethod)<0)db.settings.winMethods.push(o.winMethod);
+  save();closeSheet();render(true);toast(isNew?'登録しました':'保存しました');
+  if(kind==='ticket'&&isNew&&o.result!=='落選'&&tkTotal(o)>0){
+    var tot=tkTotal(o);
+    confirmDlg('チケット代 '+yen(tot)+'(1枚あたり '+yen(tkUnit(o))+'・'+tkCount(o)+'枚・手数料込)を収支にも登録しますか？','登録する').then(function(ok){
+      if(!ok)return;
+      db.money.push({id:uid(),createdAt:Date.now(),type:'支出',date:todayStr(),category:'チケット',amount:tot,title:o.title,memo:'チケットから自動登録'});
+      save();render(true);toast('収支に追加しました');
+    });
+  }
+};
+A.delItem=function(){
+  if(!ui.form||!ui.form.id)return;
+  var kind=ui.form.kind, id=ui.form.id;
+  confirmDlg('この'+FORMS[kind].title+'を削除しますか？\nこの操作は元に戻せません。','削除する',true).then(function(ok){
+    if(!ok)return;
+    var coll=db[COLL[kind]];
+    db[COLL[kind]]=coll.filter(function(x){return x.id!==id});
+    save();closeSheet();render(true);toast('削除しました');
+  });
+};
 
-render();
-try { // 端末のホーム画面用アイコンを生成
-  const c = document.createElement('canvas'); c.width = c.height = 180;
-  const x = c.getContext('2d'); x.fillStyle = '#f7e4e6'; x.fillRect(0, 0, 180, 180);
-  x.fillStyle = '#a8626f'; x.font = '100px serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('♡', 90, 96);
-  ['apple-touch-icon', 'icon'].forEach(r => { const l = document.createElement('link'); l.rel = r; l.href = c.toDataURL('image/png'); document.head.appendChild(l); });
-} catch (e) {}
-try { // 初回だけ使い方を表示
-  if (!localStorage.getItem('thoughtcards.help') && !db.cards.length) $('help').showModal();
-  localStorage.setItem('thoughtcards.help', '1');
-} catch (e) {}
+/* 収支の期間移動 */
+A.mPrev=function(){mShift(-1)};
+A.mNext=function(){mShift(1)};
+function mShift(dir){
+  if(ui.mMode==='month'){
+    var y=Number(ui.mMonth.slice(0,4)), m=Number(ui.mMonth.slice(5))+dir;
+    if(m<1){m=12;y--}if(m>12){m=1;y++}
+    ui.mMonth=y+'-'+pad(m);
+  }else if(ui.mMode==='year'){ui.mYear=String(Number(ui.mYear)+dir)}
+  render(true);
+}
+
+/* 設定 */
+A.setTheme=function(d){db.settings.theme=d.v;save();applyTheme();render(true)};
+A.setAccent=function(d){db.settings.accent=d.v;save();applyTheme();render(true)};
+A.gAdd=function(){
+  var n=($('#gName').value||'').trim(), c=$('#gColor').value;
+  if(!n){toast('グループ名を入力してください');return}
+  if(db.settings.groups.some(function(g){return g.name===n})){toast('同じ名前のグループがあります');return}
+  db.settings.groups.push({name:n,color:c});save();render(true);toast('追加しました');
+};
+A.gRename=function(d){
+  var g=db.settings.groups[Number(d.i)];if(!g)return;
+  openSheet('<div class="sheet-head"><button class="btn-text" data-act="closeSheet">キャンセル</button><b>グループ名の変更</b>'
+    +'<button class="btn-text strong" data-act="gRenameSave" data-i="'+Number(d.i)+'">保存</button></div>'
+    +'<div class="sheet-body"><div class="f"><label for="gRenameIn">グループ名</label><input id="gRenameIn" type="text" value="'+esc(g.name)+'" autocomplete="off"></div>'
+    +'<div class="sub" style="margin-top:10px">チケット・名義・レポに入力済みの「'+esc(g.name)+'」も、新しい名前に変わります。</div></div>');
+  setTimeout(function(){var i=$('#gRenameIn');if(i){i.focus();i.select()}},60);
+};
+A.gRenameSave=function(d){
+  var g=db.settings.groups[Number(d.i)];if(!g)return;
+  var nn=($('#gRenameIn').value||'').trim(), old=g.name;
+  if(!nn){toast('グループ名を入力してください');return}
+  if(nn===old){closeSheet();return}
+  if(db.settings.groups.some(function(x){return x.name===nn})){toast('同じ名前のグループがあります');return}
+  var n=0;
+  ['tickets','names','reports'].forEach(function(k){db[k].forEach(function(x){if(x.group===old){x.group=nn;n++}})});
+  g.name=nn;save();closeSheet();render(true);toast('変更しました('+n+'件のデータにも反映)');
+};
+A.wmAdd=function(){
+  var v=($('#wmName').value||'').trim();
+  if(!v){toast('候補を入力してください');return}
+  if(db.settings.winMethods.indexOf(v)>=0){toast('同じ候補があります');return}
+  db.settings.winMethods.push(v);save();render(true);
+};
+A.wmDel=function(d){db.settings.winMethods.splice(Number(d.i),1);save();render(true)};
+A.gDel=function(d){
+  var g=db.settings.groups[Number(d.i)];if(!g)return;
+  confirmDlg('「'+g.name+'」を削除しますか？\n登録済みのデータは消えません。','削除する',true).then(function(ok){
+    if(!ok)return;db.settings.groups.splice(Number(d.i),1);save();render(true);
+  });
+};
+
+/* ---------- H. 検索(全データ横断) ---------- */
+A.search=function(){
+  openSheet('<div class="sheet-head"><span style="width:56px"></span><b>横断検索</b><button class="btn-text strong" data-act="closeSheet">閉じる</button></div>'
+    +'<div class="sheet-body"><input id="gq" class="search" type="search" enterkeyhint="search" placeholder="チケット・名義・遠征・レポ・収支を検索" autocomplete="off"><div id="sres"><div class="empty">キーワードを入力してください<br>ひらがな/カタカナ・全角/半角は区別しません</div></div></div>');
+  setTimeout(function(){var q=$('#gq');if(q)q.focus()},60);
+};
+function renderSearch(){
+  var q=$('#gq').value, toks=tokens(q), box=$('#sres');
+  if(!toks.length){box.innerHTML='<div class="empty">キーワードを入力してください</div>';return}
+  var defs=[
+    {kind:'ticket',coll:'tickets',ic:'🎟',title:function(x){return x.title},sub:function(x){return [fmtD(x.date,true),x.venue,x.holder].filter(Boolean).join(' / ')}},
+    {kind:'name',coll:'names',ic:'👤',title:function(x){return x.name},sub:function(x){return [x.group,x.memberNo].filter(Boolean).join(' / ')}},
+    {kind:'trip',coll:'trips',ic:'✈️',title:function(x){return x.name},sub:function(x){return [fmtD(x.depart,true),x.show].filter(Boolean).join(' / ')}},
+    {kind:'report',coll:'reports',ic:'📝',title:function(x){return x.title},sub:function(x){return [fmtD(x.date,true),x.seat].filter(Boolean).join(' / ')}},
+    {kind:'money',coll:'money',ic:'💰',title:function(x){return x.title||x.category},sub:function(x){return [fmtD(x.date,true),(x.type==='収入'?'+':'-')+yen(x.amount)].join(' / ')}}
+  ];
+  var html='',total=0;
+  defs.forEach(function(df){
+    var rs=db[df.coll].filter(function(x){
+      // 遠征は紐づけた公演名でも検索できるようにする
+      return matchItem(df.kind==='trip'?Object.assign({},x,{_t:linkedTickets(x).map(function(t){return t.title}).join(' ')}):x,toks);
+    });
+    if(!rs.length)return;total+=rs.length;
+    html+='<div class="sres-h">'+df.ic+' '+KIND_LABEL[df.kind]+'('+rs.length+')</div>'
+      +rs.slice(0,30).map(function(x){
+        return '<div class="ev" data-act="openRes" data-kind="'+df.kind+'" data-id="'+esc(x.id)+'"><div class="grow"><div style="font-weight:700">'+esc(df.title(x))+'</div><div class="meta">'+esc(df.sub(x))+'</div></div><span class="sub">›</span></div>';
+      }).join('');
+  });
+  box.innerHTML=total?html:'<div class="empty">見つかりませんでした</div>';
+}
+A.openRes=function(d){if(d.kind==='report')showReport(d.id);else openForm(d.kind,d.id)};
+
+/* ---------- I. バックアップ・復元 ---------- */
+function stamp(){var d=new Date();return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())}
+function exportPayload(){return JSON.stringify({app:'log',version:1,exportedAt:new Date().toISOString(),data:db},null,2)}
+function markBackup(){db.settings.lastBackup=Date.now();save();render(true)}
+A.exportJson=function(){
+  try{
+    var blob=new Blob([exportPayload()],{type:'application/json'}), url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download='log-backup-'+stamp()+'.json';
+    document.body.appendChild(a);a.click();
+    setTimeout(function(){a.remove();URL.revokeObjectURL(url)},1500);
+    markBackup();toast('バックアップを書き出しました');
+  }catch(e){toast('書き出しに失敗しました。「JSONをコピー」をお試しください')}
+};
+A.shareJson=function(){
+  try{
+    var file=new File([exportPayload()],'log-backup-'+stamp()+'.json',{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'log バックアップ'}).then(markBackup,function(){});
+    }else{toast('この環境では共有保存できません。ダウンロードをお使いください')}
+  }catch(e){toast('共有できませんでした')}
+};
+A.copyJson=function(){copyText(exportPayload()).then(function(ok){if(ok){markBackup();toast('JSONをコピーしました。メモ等に貼り付けて保管できます')}else toast('コピーできませんでした')})};
+A.importFile=function(){var f=$('#fileIn');f.value='';f.click()};
+A.importPaste=function(){
+  ui.pasteMode=true;
+  openSheet('<div class="sheet-head"><button class="btn-text" data-act="closeSheet">キャンセル</button><b>貼り付けて復元</b><button class="btn-text strong" data-act="doPaste">復元</button></div>'
+    +'<div class="sheet-body"><div class="sub" style="margin-bottom:8px">コピーしたバックアップJSONを貼り付けてください</div><textarea id="pasteBox" rows="12" placeholder="{ ... }" style="font-size:13px"></textarea></div>');
+};
+A.doPaste=function(){var t=$('#pasteBox').value;closeSheet();importText(t)};
+function importText(text){
+  var nd;
+  try{nd=parseBackup(text)}catch(e){toast(e.message);return}
+  var c=function(k){return nd[k].length};
+  confirmDlg('このバックアップで現在のデータを置き換えますか？\n\nチケット '+c('tickets')+' / 名義 '+c('names')+' / 遠征 '+c('trips')+' / 収支 '+c('money')+' / レポ '+c('reports')
+    +'\n\n※置き換え前の状態は「自動バックアップ」に残ります','復元する',true).then(function(ok){
+    if(!ok)return;
+    db=nd;save();applyTheme();render(false);toast('復元しました');
+  });
+}
+A.restoreAuto=function(){
+  var bak=store.get(BAK);if(!bak){toast('自動バックアップがありません');return}
+  var nd;try{nd=parseBackup(bak)}catch(e){toast('自動バックアップを読み込めませんでした');return}
+  confirmDlg('1つ前の保存状態に戻しますか？\n現在の状態は上書きされます(戻した後、再度「自動バックアップから復元」で元に戻せます)。','戻す',true).then(function(ok){
+    if(!ok)return;
+    db=nd;save();applyTheme();render(true);toast('復元しました');
+  });
+};
+A.wipeAll=function(){
+  confirmDlg('すべてのデータを削除します。\n先にバックアップを取ることを強くおすすめします。','次へ',true).then(function(ok){
+    if(!ok)return;
+    return confirmDlg('本当に全データを削除しますか？\nこの操作は元に戻せません。','完全に削除する',true).then(function(ok2){
+      if(!ok2)return;
+      store.del(KEY);store.del(BAK);store.del(CORRUPT);
+      db=defaults();applyTheme();ui.tab='cal';render(false);toast('全データを削除しました');
+    });
+  });
+};
+var deferredInstall=null;
+A.install=function(){
+  if(!deferredInstall)return;
+  deferredInstall.prompt();
+  if(deferredInstall.userChoice)deferredInstall.userChoice.then(function(){deferredInstall=null;render(true)});
+};
+
+/* ---------- J. PWA ---------- */
+function makeIcon(s){
+  var c=document.createElement('canvas');c.width=c.height=s;
+  var x=c.getContext('2d');if(!x)return '';
+  var g=x.createLinearGradient(0,0,s,s);g.addColorStop(0,'#f9a8d4');g.addColorStop(1,'#ec4899');
+  x.fillStyle=g;x.fillRect(0,0,s,s);
+  x.fillStyle='#fff';x.font='bold '+Math.round(s*0.42)+'px -apple-system,BlinkMacSystemFont,sans-serif';
+  x.textAlign='center';x.textBaseline='middle';x.fillText('log',s/2,s*0.54);
+  return c.toDataURL('image/png');
+}
+function setupPWA(){
+  try{
+    var i180=makeIcon(180), i192=makeIcon(192), i512=makeIcon(512);
+    if(i180){var ai=document.createElement('link');ai.rel='apple-touch-icon';ai.href=i180;document.head.appendChild(ai)}
+    var base=location.href.split('#')[0].split('?')[0];
+    var mf={name:'log',short_name:'log',description:'完全オフライン推し活管理アプリ',start_url:base,scope:base.replace(/[^\/]*$/,''),
+      display:'standalone',orientation:'portrait',background_color:'#fff5f7',theme_color:'#ec4899',lang:'ja',
+      icons:i192?[{src:i192,sizes:'192x192',type:'image/png'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]:[]};
+    var ml=document.createElement('link');ml.rel='manifest';
+    ml.href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/manifest+json'}));
+    document.head.appendChild(ml);
+  }catch(e){}
+  // Service Worker は同じ場所の sw.js を登録(http/https のときのみ。無くてもアプリは動作します)
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredInstall=e;if(ui.tab==='set')render(true)});
+  window.addEventListener('appinstalled',function(){deferredInstall=null;toast('インストールしました')});
+}
+
+/* ---------- K. 起動 ---------- */
+function bindEvents(){
+  // クリックは data-act で一括処理(イベント委譲)
+  document.addEventListener('click',function(e){
+    var el=e.target.closest?e.target.closest('[data-act]'):null;
+    if(el){
+      var f=A[el.getAttribute('data-act')];
+      if(f){
+        if(el.tagName==='BUTTON')e.preventDefault();
+        var d={};for(var i=0;i<el.attributes.length;i++){var a=el.attributes[i];if(a.name.indexOf('data-')===0)d[a.name.slice(5)]=a.value}
+        f(d,el,e);
+      }
+      return;
+    }
+    if(e.target.id==='ov')closeSheet();
+    if(e.target.id==='dlg')closeDlg(false);
+  });
+  // 検索欄・セレクトの変更
+  function onBind(e){
+    var el=e.target;
+    if(el.id==='gq'){renderSearch();return}
+    var k=el.getAttribute&&el.getAttribute('data-bind');
+    if(k){ui[k]=el.value;var rf=REFRESH[el.getAttribute('data-rf')];if(rf)rf()}
+  }
+  // テキスト入力は input のみ、セレクトは change のみで処理する。
+  // (入力欄の blur で change が走ると、直後のタップ対象が再描画で消えてタップが無効になるため)
+  document.addEventListener('input',function(e){
+    if(e.target.tagName!=='SELECT')onBind(e);
+    var gc=e.target.getAttribute&&e.target.getAttribute('data-gc');
+    if(gc!=null){var g=db.settings.groups[Number(gc)];if(g){g.color=e.target.value;save()}}
+  });
+  document.addEventListener('change',function(e){
+    if(e.target.tagName==='SELECT')onBind(e);
+    if(e.target.getAttribute&&e.target.getAttribute('data-gc')!=null)render(true);
+  });
+  $('#fileIn').addEventListener('change',function(e){
+    var f=e.target.files&&e.target.files[0];if(!f)return;
+    var r=new FileReader();
+    r.onload=function(){importText(String(r.result))};
+    r.onerror=function(){toast('ファイルを読み込めませんでした')};
+    r.readAsText(f);
+  });
+}
+function init(){
+  $('#nav').innerHTML=TABS.map(function(t){return '<button data-act="tab" data-v="'+t.id+'"><span class="ic">'+t.ic+'</span><span class="lb">'+t.l+'</span></button>'}).join('');
+  applyTheme();bindEvents();render(false);setupPWA();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}  // データ消失防止(永続化を要求)
+  if(!store.get(KEY))save();                                                                    // 初回起動: 初期データを保存
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+
+})();
 </script>
 </body>
 </html>
