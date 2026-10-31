@@ -219,6 +219,15 @@ ol.set li{padding:2px 0}
 .choose button{background:var(--card);border-radius:16px;padding:18px 8px;font-weight:700;box-shadow:var(--shadow);font-size:15px}
 .choose button span{display:block;font-size:28px;margin-bottom:4px}
 .sres-h{font-size:12px;font-weight:800;color:var(--primary);margin:14px 0 2px}
+.fh{width:100%;font-size:13px;font-weight:800;color:var(--primary);margin-top:8px;padding-bottom:3px;border-bottom:1.5px solid var(--line)}
+.hint{font-size:11.5px;color:var(--sub);margin:3px 2px 0;line-height:1.5}
+.feeprev{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.6}
+.card.going{box-shadow:0 0 0 2px var(--primary),var(--shadow)}
+.cell .st{position:absolute;top:2px;left:4px;font-size:10px;color:var(--primary);line-height:1}
+.dot.maybe{background:transparent;border:2px solid var(--c,var(--primary));width:9px;height:9px}
+.gblock{padding:10px 0;border-top:1px solid var(--line)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px 52px}
+.mchips .chip button{min-height:32px;padding:0 8px;color:inherit}
 </style>
 </head>
 <body>
@@ -280,11 +289,15 @@ var STATUSES=['自名義','借用名義','同行','配布済','譲渡済','不�
 var STATUS_COLOR={'自名義':'#ec4899','借用名義':'#8b5cf6','同行':'#3b82f6','配布済':'#16a34a','譲渡済':'#f59e0b','不参戦':'#94a3b8'};
 var ATTENDS=['参戦','不参戦','未定'];
 var RESULTS=['当選','落選'];
-var WIN_METHODS=['FC先行','FC二次','一般先行','一般発売','当日券','リセール','同行者枠','譲渡','その他'];
+var ATT_EV=['参戦','検討中','見送り'];
+var ATT_COLOR={'参戦':'var(--primary)','検討中':'#f59e0b','見送り':'#94a3b8'};
+var EV_KINDS=['コンサート・ライブ','ファンミ・イベント','舞台・ミュージカル','ドラマ・映画','TV・ラジオ','雑誌・WEB','配信','その他'];
+var RECEPTIONS=['先行','一般発売','二次・追加販売','当日券','リセール','譲渡・同行','その他'];
+var DEFAULT_SOURCES=['FC','ぴあ','ローチケ','イープラス','公式(一般)','リセール・譲渡','その他'];
 var MCATS=['チケット','交通','宿泊','グッズ','飲食','その他'];
 var WD=['日','月','火','水','木','金','土'];
-var COLL={ticket:'tickets',name:'names',trip:'trips',money:'money',report:'reports'};
-var KIND_LABEL={ticket:'チケット',name:'名義',trip:'遠征',money:'収支',report:'レポ'};
+var COLL={ticket:'tickets',name:'names',trip:'trips',money:'money',report:'reports',event:'events'};
+var KIND_LABEL={ticket:'チケット',name:'名義',trip:'遠征',money:'収支',report:'レポ',event:'イベント'};
 var ACCENTS={
   pink:{n:'ピンク',p:'#ec4899',l:'#fbcfe8',bg:'#fff5f7'},
   lavender:{n:'ラベンダー',p:'#8b5cf6',l:'#ddd6fe',bg:'#f8f5ff'},
@@ -292,7 +305,7 @@ var ACCENTS={
   mint:{n:'ミント',p:'#10b981',l:'#a7f3d0',bg:'#f1fbf7'}
 };
 var TABS=[
-  {id:'cal',ic:'📅',l:'カレンダー'},{id:'ticket',ic:'🎟',l:'チケット'},{id:'name',ic:'👤',l:'名義'},
+  {id:'cal',ic:'📅',l:'カレンダー'},{id:'ticket',ic:'🎟',l:'公演'},{id:'name',ic:'👤',l:'名義'},
   {id:'trip',ic:'✈️',l:'遠征'},{id:'money',ic:'💰',l:'収支'},{id:'report',ic:'📝',l:'レポ'},{id:'set',ic:'⚙️',l:'設定'}
 ];
 
@@ -319,7 +332,7 @@ function norm(s){
 function tokens(q){return norm(q).split(/\s+/).filter(Boolean)}
 function matchItem(item,toks){
   if(!toks.length)return true;
-  var vals=[];for(var k in item){if(k==='id'||k==='createdAt'||k==='updatedAt')continue;vals.push(item[k])}
+  var vals=[];for(var k in item){if(k==='id'||k==='createdAt'||k==='updatedAt'||/Ids?$/.test(k))continue;vals.push(item[k])}
   var t=norm(vals.join(' '));
   for(var i=0;i<toks.length;i++){if(t.indexOf(toks[i])<0)return false}
   return true;
@@ -335,7 +348,10 @@ var store={
   del:function(k){try{localStorage.removeItem(k)}catch(e){}delete mem[k]}
 };
 function defaults(){
-  return {version:1,settings:{theme:'auto',accent:'pink',lastBackup:null,groups:clone(DEFAULT_GROUPS),winMethods:clone(WIN_METHODS)},tickets:[],names:[],trips:[],money:[],reports:[]};
+  return {version:1,settings:{theme:'auto',accent:'pink',lastBackup:null,
+    groups:clone(DEFAULT_GROUPS).map(function(g){g.members=[];return g}),
+    sources:DEFAULT_SOURCES.map(function(n){return {name:n,perTicket:0,perOrder:0}})},
+    tickets:[],names:[],trips:[],money:[],reports:[],events:[]};
 }
 function normalize(d){
   var b=defaults(), s=d.settings||{};
@@ -344,13 +360,16 @@ function normalize(d){
   b.settings.lastBackup=s.lastBackup||null;
   if(Array.isArray(s.groups)){
     b.settings.groups=s.groups.filter(function(g){return g&&typeof g.name==='string'&&g.name}).map(function(g){
-      return {name:g.name,color:/^#[0-9a-f]{6}$/i.test(g.color)?g.color:'#94a3b8'};
+      var ms=Array.isArray(g.members)?g.members.filter(function(m,i,a){return typeof m==='string'&&m&&a.indexOf(m)===i}):[];
+      return {name:g.name,color:/^#[0-9a-f]{6}$/i.test(g.color)?g.color:'#94a3b8',members:ms};
     });
   }
-  if(Array.isArray(s.winMethods)){
-    b.settings.winMethods=s.winMethods.filter(function(w,i,a){return typeof w==='string'&&w&&a.indexOf(w)===i});
+  if(Array.isArray(s.sources)){
+    b.settings.sources=s.sources.filter(function(x){return x&&typeof x.name==='string'&&x.name}).map(function(x){
+      return {name:x.name,perTicket:Math.max(0,num(x.perTicket)),perOrder:Math.max(0,num(x.perOrder))};
+    });
   }
-  ['tickets','names','trips','money','reports'].forEach(function(k){
+  ['tickets','names','trips','money','reports','events'].forEach(function(k){
     b[k]=Array.isArray(d[k])?d[k].filter(function(x){return x&&typeof x==='object'}).map(function(x){
       var o=Object.assign({},x);if(!o.id)o.id=uid();return o;
     }):[];
@@ -361,7 +380,7 @@ function parseBackup(text){
   var o;
   try{o=JSON.parse(text)}catch(e){throw new Error('JSONとして読み取れませんでした')}
   var data=(o&&o.data&&typeof o.data==='object')?o.data:o;
-  if(!data||typeof data!=='object'||!['tickets','names','trips','money','reports'].some(function(k){return Array.isArray(data[k])})){
+  if(!data||typeof data!=='object'||!['tickets','names','trips','money','reports','events'].some(function(k){return Array.isArray(data[k])})){
     throw new Error('logのバックアップファイルではありません');
   }
   return normalize(data);
@@ -404,6 +423,7 @@ if(mq){if(mq.addEventListener)mq.addEventListener('change',applyTheme);else if(m
 /* ---------- D. UI基盤 ---------- */
 var ui={
   tab:'cal',calY:new Date().getFullYear(),calM:new Date().getMonth(),calSel:todayStr(),
+  tkMode:'event',tSource:'',tResult:'',eQ:'',eGroup:'',eKind:'',ePeriod:'',eAttend:'',
   tQ:'',tSort:'near',tGroup:'',tPeriod:'',tStatus:'',
   nQ:'',rQ:'',
   mMode:'month',mMonth:todayStr().slice(0,7),mYear:String(new Date().getFullYear()),mCat:'',
@@ -443,26 +463,74 @@ function copyText(t){
   });
 }
 function groupColor(n){var g=db.settings.groups.filter(function(g){return g.name===n})[0];return g?g.color:'#c4a7b5'}
-function gchip(n){return n?'<span class="chip" style="--c:'+esc(groupColor(n))+'"><i></i>'+esc(n)+'</span>':''}
+function gchip(n,m){return n?'<span class="chip" style="--c:'+esc(groupColor(n))+'"><i></i>'+esc(n)+(m?' › '+esc(m):'')+'</span>':''}
+/* グループ絞り込み用: 値は "グループ番号" または "グループ番号.メンバー番号" */
+function gfOptions(sel){
+  var h='<option value="">全グループ</option>';
+  db.settings.groups.forEach(function(g,i){
+    h+='<option value="'+i+'"'+(sel===String(i)?' selected':'')+'>'+esc(g.name)+(g.members.length?'(すべて)':'')+'</option>';
+    g.members.forEach(function(m,j){
+      h+='<option value="'+i+'.'+j+'"'+(sel===i+'.'+j?' selected':'')+'>\u3000└ '+esc(m)+'</option>';
+    });
+  });
+  return h;
+}
+function gfMatch(v,x){
+  if(!v)return true;
+  var p=String(v).split('.'), g=db.settings.groups[Number(p[0])];
+  if(!g)return true;
+  if(x.group!==g.name)return false;
+  if(p.length>1)return x.member===g.members[Number(p[1])];
+  return true;
+}
+function allSources(){
+  var a=db.settings.sources.map(function(x){return x.name});
+  db.tickets.forEach(function(t){if(t.source&&a.indexOf(t.source)<0)a.push(t.source)});
+  return a;
+}
 function ensureGroup(n){
   if(!n)return;
   if(db.settings.groups.some(function(g){return g.name===n}))return;
-  db.settings.groups.push({name:n,color:NEW_COLORS[db.settings.groups.length%NEW_COLORS.length]});
+  db.settings.groups.push({name:n,color:NEW_COLORS[db.settings.groups.length%NEW_COLORS.length],members:[]});
+}
+function ensureMember(n,m){
+  if(!n||!m)return;
+  ensureGroup(n);
+  var g=db.settings.groups.filter(function(x){return x.name===n})[0];
+  if(g&&g.members.indexOf(m)<0)g.members.push(m);
 }
 function emptyBox(msg){return '<div class="empty">'+msg+'<br>右下の＋から登録できます</div>'}
 
 /* ---------- E. フォーム定義 ---------- */
 var FORMS={
+  event:{title:'イベント',def:function(){return {attend:'検討中',kind:'コンサート・ライブ'}},fields:[
+    {k:'title',l:'イベント・公演名',t:'text',req:1},
+    {k:'kind',l:'種別',t:'select',opts:EV_KINDS},
+    {k:'group',l:'グループ',t:'group',half:1},{k:'member',l:'メンバー(個人)',t:'member',half:1,hint:'グループ全体なら空欄。個人仕事はメンバー名を選択/入力'},
+    {k:'attend',l:'参戦の予定',t:'select',opts:ATT_EV},
+    {k:'date',l:'開始日',t:'date',half:1},{k:'endDate',l:'終了日(期間がある場合)',t:'date',half:1},
+    {k:'time',l:'開演時間',t:'time',half:1},{k:'pref',l:'都道府県',t:'select',half:1,opts:[{v:'',l:'選択なし'}].concat(PREFS)},
+    {k:'venue',l:'会場',t:'text'},
+    {k:'url',l:'情報ページURL',t:'url',ph:'https://...'},
+    {k:'memo',l:'メモ',t:'textarea'}
+  ]},
   ticket:{title:'チケット',def:function(){return {attend:'参戦',status:'自名義',count:1,result:'当選'}},fields:[
-    {k:'group',l:'グループ名',t:'group'},
+    {k:'_h1',l:'🎤 公演',t:'hdr'},
+    {k:'eventId',l:'イベントに紐づけ(任意)',t:'select',opts:eventOpts},
+    {k:'group',l:'グループ名',t:'group',half:1},{k:'member',l:'メンバー(個人)',t:'member',half:1},
     {k:'title',l:'公演名',t:'text',req:1},
     {k:'date',l:'日付',t:'date',half:1},{k:'time',l:'時間',t:'time',half:1},
     {k:'venue',l:'会場',t:'text'},
-    {k:'pref',l:'都道府県',t:'select',half:1,opts:[{v:'',l:'選択なし'}].concat(PREFS)},{k:'count',l:'枚数',t:'number',half:1},
+    {k:'pref',l:'都道府県',t:'select',opts:[{v:'',l:'選択なし'}].concat(PREFS)},
+    {k:'_h2',l:'🛒 購入・金額',t:'hdr'},
+    {k:'source',l:'購入元',t:'select',half:1,opts:sourceOpts},{k:'winMethod',l:'受付の種類',t:'select',half:1,opts:receptionOpts},
+    {k:'result',l:'申込結果(勝率に反映)',t:'select',half:1,opts:RESULTS},{k:'count',l:'枚数',t:'number',half:1},
+    {k:'price',l:'金額(1枚・円)',t:'number',half:1},{k:'fee',l:'手数料(1枚ごと・円)',t:'number',half:1},
+    {k:'orderFee',l:'手数料(1申込ごと・円)',t:'number',half:1},
+    {k:'_fp',t:'feeprev'},
+    {k:'_h3',l:'🪑 席',t:'hdr'},
     {k:'seat',l:'座席',t:'text',half:1},{k:'gate',l:'ゲート',t:'text',half:1},
-    {k:'price',l:'金額(1枚・円)',t:'number',half:1},{k:'fee',l:'手数料(1枚・円)',t:'number',half:1},
-    {k:'orderFee',l:'1申込あたりの手数料(円・申込全体で1回。枚数で按分して表示)',t:'number'},
-    {k:'winMethod',l:'当選方法',t:'win',half:1},{k:'result',l:'申込結果(勝率に反映)',t:'select',half:1,opts:RESULTS},
+    {k:'_h4',l:'👤 名義・参戦',t:'hdr'},
     {k:'holder',l:'名義',t:'holder'},
     {k:'attend',l:'参戦有無',t:'select',half:1,opts:ATTENDS},{k:'status',l:'チケット状態',t:'select',half:1,opts:STATUSES},
     {k:'companions',l:'同行者',t:'text'},
@@ -481,7 +549,8 @@ var FORMS={
   ]},
   trip:{title:'遠征',def:function(){return {}},fields:[
     {k:'name',l:'遠征名',t:'text',req:1},
-    {k:'ticketIds',l:'紐づける公演(登録済みチケットから選択)',t:'ticketlinks'},
+    {k:'eventIds',l:'紐づけるイベント・公演',t:'eventlinks'},
+    {k:'ticketIds',l:'紐づけるチケット(イベントに紐づけていないもの)',t:'ticketlinks'},
     {k:'show',l:'その他の公演名(任意)',t:'text'},
     {k:'depart',l:'出発日',t:'date',half:1},{k:'returnDate',l:'帰宅日',t:'date',half:1},
     {k:'shinkansen',l:'新幹線',t:'text',ph:'列車名・時刻・座席など'},
@@ -500,7 +569,7 @@ var FORMS={
   ]},
   report:{title:'ライブレポ',def:function(){return {}},fields:[
     {k:'title',l:'公演名',t:'text',req:1},
-    {k:'group',l:'グループ',t:'group'},
+    {k:'group',l:'グループ',t:'group',half:1},{k:'member',l:'メンバー(個人)',t:'member',half:1},
     {k:'date',l:'日付',t:'date',half:1},{k:'seat',l:'座席',t:'text',half:1},
     {k:'setlist',l:'セトリ(1行1曲)',t:'textarea',rows:8,ph:'1曲ずつ改行して入力'},
     {k:'mc',l:'MCメモ',t:'textarea',rows:4},
@@ -509,12 +578,16 @@ var FORMS={
   ]}
 };
 function fieldHtml(f,v){
+  if(f.t==='hdr')return '<div class="fh">'+esc(f.l)+'</div>';
+  if(f.t==='feeprev')return '<div class="f"><div class="feeprev" id="feePrev"></div><div class="hint">1枚ごと=発券手数料など / 1申込ごと=システム利用料・事務手数料など(申込全体で1回)。購入元を選ぶと、設定画面に登録した手数料が自動で入ります。</div></div>';
   var id='f_'+f.k, val=(v==null?'':v), inp='', ph=f.ph?' placeholder="'+esc(f.ph)+'"':'';
   switch(f.t){
     case 'textarea':
       inp='<textarea id="'+id+'" name="'+f.k+'" rows="'+(f.rows||3)+'"'+ph+'>'+esc(val)+'</textarea>';break;
     case 'select':
-      inp='<select id="'+id+'" name="'+f.k+'">'+f.opts.map(function(o){
+      var so=(typeof f.opts==='function')?f.opts():f.opts.slice();
+      if(String(val)!==''&&!so.some(function(o){return String((typeof o==='object')?o.v:o)===String(val)}))so.push(val);
+      inp='<select id="'+id+'" name="'+f.k+'">'+so.map(function(o){
         var ov=(typeof o==='object')?o.v:o, ol=(typeof o==='object')?o.l:o;
         return '<option value="'+esc(ov)+'"'+(String(ov)===String(val)?' selected':'')+'>'+esc(ol)+'</option>';
       }).join('')+'</select>';break;
@@ -528,35 +601,44 @@ function fieldHtml(f,v){
       inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_group" autocomplete="off" value="'+esc(val)+'" placeholder="選択または入力">';break;
     case 'holder':
       inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_holder" autocomplete="off" value="'+esc(val)+'" placeholder="登録済み名義から選択／入力">';break;
-    case 'win':
-      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_win" autocomplete="off" value="'+esc(val)+'" placeholder="選択／入力">';break;
+    case 'member':
+      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_member" autocomplete="off" value="'+esc(val)+'" placeholder="選択/入力">';break;
     case 'ticketlinks':
       var sel=Array.isArray(v)?v:[];
-      var tl=db.tickets.filter(function(t){return t.result!=='落選'||sel.indexOf(t.id)>=0})
+      var tl=db.tickets.filter(function(t){return (!t.eventId&&t.result!=='落選')||sel.indexOf(t.id)>=0})
         .sort(function(a,b){return (a.date||'9999').localeCompare(b.date||'9999')});
       inp=tl.length?'<div class="links">'+tl.map(function(t){
         return '<label class="lk"><input type="checkbox" name="'+f.k+'" value="'+esc(t.id)+'"'+(sel.indexOf(t.id)>=0?' checked':'')+'><span><b>'+esc(t.title||'(無題)')+'</b><br><small class="sub">'
           +esc([fmtD(t.date,true),t.venue,t.holder].filter(Boolean).join(' / '))+'</small></span></label>';
-      }).join('')+'</div>':'<div class="sub">チケットが未登録です。先にチケットを登録すると紐づけられます</div>';
+      }).join('')+'</div>':'<div class="sub">紐づけできるチケットはありません</div>';
+      break;
+    case 'eventlinks':
+      var sel2=Array.isArray(v)?v:[];
+      var evl=orderEvents(db.events.filter(function(e){return evAttend(e)!=='見送り'||sel2.indexOf(e.id)>=0}));
+      inp=evl.length?'<div class="links">'+evl.map(function(e){
+        return '<label class="lk"><input type="checkbox" name="'+f.k+'" value="'+esc(e.id)+'"'+(sel2.indexOf(e.id)>=0?' checked':'')+'><span><b>'+(evAttend(e)==='参戦'?'★ ':'')+esc(e.title||'(無題)')+'</b><br><small class="sub">'
+          +esc([fmtD(e.date,true),e.venue].filter(Boolean).join(' / '))+'</small></span></label>';
+      }).join('')+'</div>':'<div class="sub">紐づけできるイベントはありません(「公演」タブで登録できます)</div>';
       break;
     default:
       inp='<input id="'+id+'" name="'+f.k+'" type="text" value="'+esc(val)+'"'+ph+'>';
   }
-  return '<div class="f'+(f.half?' half':'')+'"><label for="'+id+'">'+esc(f.l)+(f.req?'<em>*</em>':'')+'</label>'+inp+'</div>';
+  return '<div class="f'+(f.half?' half':'')+'"><label for="'+id+'">'+esc(f.l)+(f.req?'<em>*</em>':'')+'</label>'+inp+(f.hint?'<div class="hint">'+esc(f.hint)+'</div>':'')+'</div>';
 }
 function datalists(){
   function dl(id,arr){return '<datalist id="'+id+'">'+arr.map(function(x){return '<option value="'+esc(x)+'">'}).join('')+'</datalist>'}
   return dl('dl_group',db.settings.groups.map(function(g){return g.name}))
     +dl('dl_holder',db.names.map(function(n){return n.name}))
-    +dl('dl_win',db.settings.winMethods);
+    +'<datalist id="dl_member"></datalist>';
 }
 function openForm(kind,id,preset){
   var spec=FORMS[kind], item=null;
   if(id){item=db[COLL[kind]].filter(function(x){return x.id===id})[0];if(!item)return}
   var base=item||Object.assign({},spec.def(),preset||{});
   // 新規の遠征は、出発日と同じ日の公演チケットをあらかじめ選択しておく
-  if(kind==='trip'&&!item&&base.depart&&!base.ticketIds){
-    base.ticketIds=db.tickets.filter(function(t){return t.date===base.depart&&t.result!=='落選'}).map(function(t){return t.id});
+  if(kind==='trip'&&!item&&base.depart&&!base.ticketIds&&!base.eventIds){
+    base.eventIds=db.events.filter(function(e){return e.date&&e.date<=base.depart&&(e.endDate||e.date)>=base.depart&&evAttend(e)!=='見送り'}).map(function(e){return e.id});
+    base.ticketIds=db.tickets.filter(function(t){return !t.eventId&&t.date===base.depart&&t.result!=='落選'}).map(function(t){return t.id});
   }
   ui.form={kind:kind,id:id||null};
   var html='<div class="sheet-head"><button class="btn-text" data-act="closeSheet">キャンセル</button>'
@@ -568,11 +650,13 @@ function openForm(kind,id,preset){
     +(id?'<div style="margin-top:22px"><button type="button" class="btn line block" data-act="delItem">この'+esc(spec.title)+'を削除</button></div>':'')
     +'</form>';
   openSheet(html);
+  updateMemberList();updateFeePreview();
 }
 function readForm(spec){
   var o={}, form=$('#frm');
   spec.fields.forEach(function(f){
-    if(f.t==='ticketlinks'){
+    if(f.t==='hdr'||f.t==='feeprev')return;
+    if(f.t==='ticketlinks'||f.t==='eventlinks'){
       o[f.k]=Array.prototype.map.call(form.querySelectorAll('input[name="'+f.k+'"]:checked'),function(e){return e.value});
       return;
     }
@@ -584,28 +668,92 @@ function readForm(spec){
   return o;
 }
 
+/* フォーム補助: メンバー候補・手数料プレビュー・購入元からの手数料自動入力・イベントからの自動入力 */
+function updateMemberList(){
+  var dl=$('#dl_member'), g=$('#f_group');if(!dl)return;
+  var grp=g?db.settings.groups.filter(function(x){return x.name===g.value.trim()})[0]:null;
+  dl.innerHTML=grp?grp.members.map(function(m){return '<option value="'+esc(m)+'">'}).join(''):'';
+}
+function updateFeePreview(){
+  var box=$('#feePrev'), f=$('#frm');if(!box||!f||!f.elements.price)return;
+  function v(k){return f.elements[k]?f.elements[k].value:''}
+  var t={price:v('price'),fee:v('fee'),orderFee:v('orderFee'),count:v('count')}, cnt=tkCount(t);
+  box.innerHTML='🧮 <b>1枚あたり(手数料込) '+yen(tkUnit(t))+'</b><br><span class="sub">合計 '+yen(tkTotal(t))+'('+cnt+'枚)'
+    +(num(t.orderFee)>0&&cnt>1?' / 申込ごとの手数料は1枚あたり'+yen(num(t.orderFee)/cnt)+'に按分':'')+'</span>';
+}
+function applySourceFee(name){
+  var src=db.settings.sources.filter(function(x){return x.name===name})[0], f=$('#frm');
+  if(!src||!f)return;
+  var changed=false;
+  [['fee','perTicket'],['orderFee','perOrder']].forEach(function(p){
+    var el=f.elements[p[0]];if(!el)return;
+    if(el.value===''||el.dataset.auto==='1'){el.value=src[p[1]]>0?src[p[1]]:'';el.dataset.auto='1';if(src[p[1]]>0)changed=true}
+  });
+  if(changed)toast('手数料を自動入力しました');
+}
+function applyEvent(id){
+  var ev=db.events.filter(function(x){return x.id===id})[0], f=$('#frm');
+  if(!ev||!f)return;
+  ['title','group','member','date','time','venue','pref'].forEach(function(k){
+    var el=f.elements[k];if(el&&el.value===''&&ev[k])el.value=ev[k];
+  });
+  updateMemberList();
+}
+function formInput(e){
+  var el=e.target;
+  if(!ui.form||!el.closest||!el.closest('#frm'))return;
+  if(el.id==='f_group')updateMemberList();
+  if(ui.form.kind==='ticket'){
+    if(el.id==='f_fee'||el.id==='f_orderFee')delete el.dataset.auto;
+    updateFeePreview();
+  }
+}
+function formChange(e){
+  var el=e.target;
+  if(!ui.form||!el.closest||!el.closest('#frm'))return;
+  if(el.id==='f_group')updateMemberList();
+  if(ui.form.kind==='ticket'){
+    if(el.id==='f_source')applySourceFee(el.value);
+    if(el.id==='f_eventId')applyEvent(el.value);
+    updateFeePreview();
+  }
+}
+function settingsChange(e){
+  var el=e.target, i=el.getAttribute&&el.getAttribute('data-src');
+  if(i==null)return;
+  var x=db.settings.sources[Number(i)];if(!x)return;
+  x[el.getAttribute('data-sf')]=Math.max(0,Math.floor(num(el.value)));
+  save();toast('保存しました');
+}
+
 /* ---------- F. 各画面の描画 ---------- */
 var VIEWS={};
 var TOPSUB={cal:'ホーム',ticket:'チケット',name:'名義',trip:'遠征',money:'収支',report:'ライブレポ',set:'設定'};
 
-/* 予定(チケット・遠征)を日付ごとにまとめる */
+/* 予定(イベント・チケット・遠征)を日付ごとにまとめる */
 function buildEvents(){
   var ev={};
   function push(d,e){(ev[d]=ev[d]||[]).push(e)}
-  db.tickets.forEach(function(t){
-    if(!parseD(t.date)||t.result==='落選')return;
-    push(t.date,{type:'ticket',id:t.id,title:t.title||'(無題)',sub:[t.time,t.venue].filter(Boolean).join(' '),color:groupColor(t.group),
-      dim:t.attend==='不参戦'||t.status==='不参戦'});
+  function span(a,b,fn){
+    var st=parseD(a);if(!st)return;
+    var en=parseD(b)||st;if(en<st)en=st;
+    var d=new Date(st.getFullYear(),st.getMonth(),st.getDate()),n=0;
+    while(d<=en&&n<90){fn(ymd(d));d.setDate(d.getDate()+1);n++}
+  }
+  shows().forEach(function(sh){
+    if(sh.lost)return;
+    var multi=sh.end&&sh.end>sh.date;
+    span(sh.date,sh.end,function(day){
+      var tag=multi?(diffDays(sh.date,day)+1)+'日目':'';
+      push(day,{type:sh.kind,id:sh.id,title:sh.title||'(無題)',sub:[tag,sh.time,sh.venue].filter(Boolean).join(' '),
+        color:groupColor(sh.group),att:sh.att,skip:sh.att==='見送り',dim:sh.att==='見送り'});
+    });
   });
   db.trips.forEach(function(t){
-    var a=parseD(t.depart);if(!a)return;
-    var b=parseD(t.returnDate)||a;if(b<a)b=a;
-    var d=new Date(a.getFullYear(),a.getMonth(),a.getDate()),n=0;
-    while(d<=b&&n<90){
-      var s=ymd(d), tag=(s===t.depart?'出発':'')+(s===t.returnDate?(s===t.depart?'・帰宅':'帰宅'):'');
-      push(s,{type:'trip',id:t.id,title:t.name||'(遠征)',sub:[tag,t.hotel?'🏨 '+t.hotel:''].filter(Boolean).join(' '),color:'var(--primary)'});
-      d.setDate(d.getDate()+1);n++;
-    }
+    span(t.depart,t.returnDate,function(day){
+      var tag=(day===t.depart?'出発':'')+(day===t.returnDate?(day===t.depart?'・帰宅':'帰宅'):'');
+      push(day,{type:'trip',id:t.id,title:t.name||'(遠征)',sub:[tag,t.hotel?'🏨 '+t.hotel:''].filter(Boolean).join(' '),color:'var(--primary)'});
+    });
   });
   return ev;
 }
@@ -622,7 +770,57 @@ function linkedTickets(trip){
     .sort(function(a,b){return (a.date||'').localeCompare(b.date||'')});
 }
 function tripsOf(ticket){
-  return db.trips.filter(function(tr){return Array.isArray(tr.ticketIds)&&tr.ticketIds.indexOf(ticket.id)>=0});
+  return db.trips.filter(function(tr){
+    return (Array.isArray(tr.ticketIds)&&tr.ticketIds.indexOf(ticket.id)>=0)
+      ||(ticket.eventId&&Array.isArray(tr.eventIds)&&tr.eventIds.indexOf(ticket.eventId)>=0);
+  });
+}
+function tripsOfEvent(e){
+  return db.trips.filter(function(tr){return Array.isArray(tr.eventIds)&&tr.eventIds.indexOf(e.id)>=0});
+}
+function linkedEvents(trip){
+  var ids=Array.isArray(trip.eventIds)?trip.eventIds:[];
+  return orderEvents(ids.map(function(id){return db.events.filter(function(e){return e.id===id})[0]}).filter(Boolean));
+}
+/* イベント ⇔ チケット */
+function ticketsOfEvent(e){return db.tickets.filter(function(t){return t.eventId===e.id})}
+function eventOf(t){return t.eventId?(db.events.filter(function(e){return e.id===t.eventId})[0]||null):null}
+/* 参戦の状態: '参戦' | '検討中' | '見送り' */
+function tkAttend(t){
+  if(t.result==='落選'||t.status==='不参戦'||t.attend==='不参戦')return '見送り';
+  return t.attend==='参戦'?'参戦':'検討中';
+}
+function evAttend(e){
+  var a=ATT_EV.indexOf(e.attend)>=0?e.attend:'検討中';
+  // 「検討中」でも、参戦予定のチケットが紐づいていれば参戦として扱う
+  if(a==='検討中'&&ticketsOfEvent(e).some(function(t){return tkAttend(t)==='参戦'}))return '参戦';
+  return a;
+}
+/* 今後のものを日付順 → 過去のものを新しい順 に並べる(日付未定は今後の末尾) */
+function orderEvents(list){
+  var t=todayStr();
+  function end(e){return e.endDate||e.date||'9999-12-31'}
+  function key(e){return (e.date||'9999-12-31')+' '+(e.time||'')}
+  var fut=list.filter(function(e){return end(e)>=t}).sort(function(a,b){return key(a).localeCompare(key(b))});
+  var past=list.filter(function(e){return end(e)<t}).sort(function(a,b){return key(b).localeCompare(key(a))});
+  return fut.concat(past);
+}
+function eventOpts(){
+  return [{v:'',l:'紐づけなし'}].concat(orderEvents(db.events).map(function(e){return {v:e.id,l:(e.date?fmtD(e.date)+' ':'')+e.title}}));
+}
+function sourceOpts(){return [{v:'',l:'未選択'}].concat(db.settings.sources.map(function(x){return x.name}))}
+function receptionOpts(){return [{v:'',l:'未選択'}].concat(RECEPTIONS)}
+/* 予定の一覧(イベント + イベントに紐づいていないチケット) */
+function shows(){
+  var out=[];
+  db.events.forEach(function(e){
+    out.push({kind:'event',id:e.id,title:e.title,date:e.date,end:e.endDate,time:e.time,venue:e.venue,group:e.group,member:e.member,att:evAttend(e)});
+  });
+  db.tickets.forEach(function(t){
+    if(eventOf(t))return;
+    out.push({kind:'ticket',id:t.id,title:t.title,date:t.date,end:'',time:t.time,venue:t.venue,group:t.group,member:t.member,att:tkAttend(t),lost:t.result==='落選'});
+  });
+  return out;
 }
 function tripOverlapsMonth(t,ym){
   if(!t.depart)return false;
@@ -656,33 +854,38 @@ function moneyBalance(){var b=0;db.money.forEach(function(m){b+=(m.type==='収�
 /* ---- ホーム(ダッシュボード+カレンダー) ---- */
 function viewDash(){
   var t=todayStr(), now=new Date(), ym=t.slice(0,7), yr=t.slice(0,4);
-  var upSet={};
-  db.tickets.forEach(function(x){if((x.date||'')>=t&&liveOK(x))upSet[x.date+'|'+x.title]=x});
-  var ups=Object.keys(upSet).map(function(k){return upSet[k]}).sort(function(a,b){return a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||'')});
+  var sh=shows();
+  var ups=sh.filter(function(x){return x.date&&(x.end||x.date)>=t&&x.att==='参戦'}).sort(function(a,b){return a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||'')});
   var tripsM=db.trips.filter(function(x){return tripOverlapsMonth(x,ym)}).length;
-  var attSet={};
-  db.tickets.forEach(function(x){if(x.attend==='参戦'&&x.status!=='不参戦'&&x.result!=='落選'&&(x.date||'').slice(0,4)===yr&&x.date<=t)attSet[x.date+'|'+x.title]=1});
-  var att=Object.keys(attSet).length, os=calcStats().overall, bal=moneyBalance();
+  var att=sh.filter(function(x){return x.att==='参戦'&&x.date&&x.date.slice(0,4)===yr&&x.date<=t}).length;
+  var os=calcStats().overall, bal=moneyBalance();
   var h='';
-  var total=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length;
+  var total=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length+db.events.length;
   var days=db.settings.lastBackup?Math.floor((Date.now()-db.settings.lastBackup)/86400000):null;
   if(total>0&&(days==null||days>=30)){
     h+='<div class="banner" data-act="tab" data-v="set" style="cursor:pointer">💾 '+(days==null?'まだバックアップがありません':'最後のバックアップから'+days+'日経っています')+'。タップして設定へ</div>';
   }
   if(ups.length){
     var n=ups[0], dd=diffDays(t,n.date);
-    h+='<div class="card next tap" data-act="edit" data-kind="ticket" data-id="'+esc(n.id)+'">'
-      +'<div class="row between"><div class="sub">次の公演</div><div style="font-weight:800;font-size:20px">'+(dd===0?'今日!':'あと'+dd+'日')+'</div></div>'
+    h+='<div class="card next tap" data-act="edit" data-kind="'+n.kind+'" data-id="'+esc(n.id)+'">'
+      +'<div class="row between"><div class="sub">★ 次の参戦</div><div style="font-weight:800;font-size:20px">'+(dd<0?'開催中':dd===0?'今日!':'あと'+dd+'日')+'</div></div>'
       +'<div class="ttl" style="margin-top:2px">'+esc(n.title)+'</div>'
       +'<div class="meta">'+fmtD(n.date,true)+' '+esc(n.time||'')+' '+esc(n.venue||'')+'</div></div>';
   }
   h+='<div class="stats">'
-    +'<div class="stat" data-act="tab" data-v="ticket"><b>'+ups.length+'件</b><span>今後の公演</span></div>'
+    +'<div class="stat" data-act="tab" data-v="ticket"><b>'+ups.length+'件</b><span>今後の参戦予定</span></div>'
     +'<div class="stat" data-act="tab" data-v="trip"><b>'+tripsM+'件</b><span>今月の遠征</span></div>'
     +'<div class="stat" data-act="tab" data-v="ticket"><b>'+att+'回</b><span>今年の参戦</span></div>'
     +'<div class="stat" data-act="tab" data-v="money"><b class="'+(bal<0?'neg':'')+'" style="'+(bal<0?'':'')+'">'+yen(bal)+'</b><span>収支合計</span></div>'
     +'<div class="stat" data-act="tab" data-v="name"><b>'+db.names.length+'</b><span>登録名義数</span></div>'
     +'<div class="stat" data-act="tab" data-v="name"><b>'+fmtRate(os.r)+'</b><span>勝率</span></div></div>';
+  if(ups.length>1){
+    h+='<div class="card"><h3>📌 これからの参戦予定</h3>'+ups.slice(1,6).map(function(x){
+      var d2=diffDays(t,x.date);
+      return '<div class="ev" data-act="edit" data-kind="'+x.kind+'" data-id="'+esc(x.id)+'"><div class="bar2" style="--c:'+esc(groupColor(x.group))+'"></div><div class="grow"><div style="font-weight:700">'+esc(x.title)+'</div>'
+        +'<div class="meta">'+esc([fmtD(x.date,true),x.venue].filter(Boolean).join(' '))+'</div></div><span class="sub">'+(d2>0?'あと'+d2+'日':'')+'</span></div>';
+    }).join('')+'</div>';
+  }
   // 更新月の名義
   var curM=now.getMonth()+1, nextM=curM%12+1;
   var renew=db.names.filter(function(n){return Number(n.renewMonth)===curM||Number(n.renewMonth)===nextM});
@@ -702,10 +905,12 @@ function viewCal(){
   for(var i=0;i<start;i++)cells+='<div class="cell empty"></div>';
   for(var d=1;d<=days;d++){
     var s=y+'-'+pad(m+1)+'-'+pad(d), e=ev[s]||[], dow=(start+d-1)%7;
-    var sorted=e.slice().sort(function(a,b){return a.type===b.type?0:(a.type==='ticket'?-1:1)});
-    var dots=sorted.slice(0,4).map(function(x){return '<span class="dot'+(x.type==='trip'?' trip':'')+'" style="--c:'+x.color+'"></span>'}).join('');
+    var vis=e.filter(function(x){return !x.skip});
+    var sorted=vis.slice().sort(function(a,b){return (a.type==='trip'?1:0)-(b.type==='trip'?1:0)});
+    var going=vis.some(function(x){return x.att==='参戦'});
+    var dots=sorted.slice(0,4).map(function(x){return '<span class="dot'+(x.type==='trip'?' trip':(x.att==='検討中'?' maybe':''))+'" style="--c:'+esc(x.color)+'"></span>'}).join('');
     cells+='<button class="cell d'+dow+(s===t?' today':'')+(s===ui.calSel?' sel':'')+'" data-act="calSel" data-date="'+s+'">'
-      +'<span class="dn">'+d+'</span>'+(e.length?'<span class="cnt">'+e.length+'</span>':'')+'<span class="dots">'+dots+'</span></button>';
+      +(going?'<span class="st">★</span>':'')+'<span class="dn">'+d+'</span>'+(vis.length?'<span class="cnt">'+vis.length+'</span>':'')+'<span class="dots">'+dots+'</span></button>';
   }
   var h='<div class="calhead"><button class="nb" data-act="calPrev" aria-label="前月">‹</button>'
     +'<div class="row gap"><span class="mt">'+y+'年'+(m+1)+'月</span><button class="today" data-act="calToday">今日</button></div>'
@@ -716,45 +921,59 @@ function viewCal(){
   h+='<div class="card" style="margin-top:12px"><div class="row between"><h3 style="margin:0">'+(sel?fmtD(sel,true):'')+' <span class="sub">'+se.length+'件</span></h3></div>';
   if(se.length){
     h+=se.map(function(x){
+      var ic={event:'🎤 ',ticket:'🎟 ',trip:'✈️ '}[x.type]||'';
+      var ab=x.att?'<span class="badge" style="--b:'+ATT_COLOR[x.att]+'">'+(x.att==='参戦'?'★ ':'')+x.att+'</span>':'';
       return '<div class="ev'+(x.dim?' dim':'')+'" data-act="edit" data-kind="'+x.type+'" data-id="'+esc(x.id)+'">'
-        +'<div class="bar2" style="--c:'+x.color+'"></div><div class="grow"><div style="font-weight:700">'+(x.type==='ticket'?'🎟 ':'✈️ ')+esc(x.title)+'</div>'
-        +(x.sub?'<div class="meta">'+esc(x.sub)+'</div>':'')+'</div><span class="sub">›</span></div>';
+        +'<div class="bar2" style="--c:'+esc(x.color)+'"></div><div class="grow"><div style="font-weight:700">'+ic+esc(x.title)+'</div>'
+        +(x.sub?'<div class="meta">'+esc(x.sub)+'</div>':'')+'</div>'+ab+'<span class="sub">›</span></div>';
     }).join('');
   }else{h+='<div class="sub" style="padding:8px 0">予定はありません</div>'}
-  h+='<div class="btnrow"><button class="btn ghost sm" data-act="addOn" data-kind="ticket" data-date="'+sel+'">＋チケット</button>'
+  h+='<div class="btnrow"><button class="btn ghost sm" data-act="addOn" data-kind="event" data-date="'+sel+'">＋イベント</button>'
+    +'<button class="btn ghost sm" data-act="addOn" data-kind="ticket" data-date="'+sel+'">＋チケット</button>'
     +'<button class="btn ghost sm" data-act="addOn" data-kind="trip" data-date="'+sel+'">＋遠征</button>'
     +'<button class="btn ghost sm" data-act="addOn" data-kind="report" data-date="'+sel+'">＋レポ</button></div></div>';
   return h;
 }
 /* 「ようこそ」カード: ホームの一番下に表示(データが1件も無いときだけ) */
 function welcomeCard(){
-  var total=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length;
+  var total=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length+db.events.length;
   if(total>0)return '';
   return '<div class="card"><h3>🎀 ようこそ log へ</h3><div class="sub" style="line-height:1.8">'
-    +'1. ⚙️設定でグループカラーを確認<br>2. 👤名義 を登録<br>3. 🎟チケット を登録(申込結果が勝率に自動反映されます)<br>4. 画面右下の ＋ からいつでも追加できます<br><br>'
+    +'1. ⚙️設定でグループカラーを確認<br>2. 👤名義 を登録<br>3. 🎟公演タブでイベントやチケットを登録(申込結果は勝率に自動反映)<br>4. 画面右下の ＋ からいつでも追加できます<br><br>'
     +'データはこの端末の中だけに保存されます。こまめにバックアップ(設定)を取りましょう。</div></div>';
 }
 VIEWS.cal=function(){return viewDash()+viewCal()+welcomeCard()};
 
 /* ---- チケット ---- */
-VIEWS.ticket=function(){
+function viewTickets(){
   var sopt=[['near','近い順'],['dateDesc','日付↓新'],['dateAsc','日付↑古'],['price','金額順'],['group','グループ順'],['created','登録順']];
   return '<div class="toolbar">'
     +'<input class="search" type="search" enterkeyhint="search" placeholder="🔍 公演名・会場・座席・名義などで検索" value="'+esc(ui.tQ)+'" data-bind="tQ" data-rf="ticket">'
     +'<div class="row gap" style="margin-bottom:8px">'
     +'<select data-bind="tSort" data-rf="ticket">'+sopt.map(function(o){return '<option value="'+o[0]+'"'+(ui.tSort===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'
-    +'<select data-bind="tGroup" data-rf="ticket"><option value="">全グループ</option>'+db.settings.groups.map(function(g){return '<option'+(ui.tGroup===g.name?' selected':'')+' value="'+esc(g.name)+'">'+esc(g.name)+'</option>'}).join('')+'</select>'
+    +'<select data-bind="tGroup" data-rf="ticket">'+gfOptions(ui.tGroup)+'</select>'
     +'<select data-bind="tPeriod" data-rf="ticket">'+[['','全期間'],['future','今後'],['past','過去']].map(function(o){return '<option value="'+o[0]+'"'+(ui.tPeriod===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'
     +'</div>'
+    +'<div class="row gap" style="margin-bottom:8px"><select data-bind="tSource" data-rf="ticket"><option value="">全購入元</option>'+allSources().map(function(n){return '<option value="'+esc(n)+'"'+(ui.tSource===n?' selected':'')+'>'+esc(n)+'</option>'}).join('')+'</select>'
+    +'<select data-bind="tResult" data-rf="ticket">'+[['','当落すべて'],['win','当選のみ'],['lose','落選のみ']].map(function(o){return '<option value="'+o[0]+'"'+(ui.tResult===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'
     +'<div class="chips"><button class="'+(ui.tStatus===''?'on':'')+'" data-act="setUi" data-k="tStatus" data-v="">すべて</button>'
     +STATUSES.map(function(s){return '<button class="'+(ui.tStatus===s?'on':'')+'" data-act="setUi" data-k="tStatus" data-v="'+s+'">'+s+'</button>'}).join('')+'</div></div>'
     +'<div id="tsum" class="sub" style="margin:0 2px 8px"></div><div id="tlist"></div>';
+};
+VIEWS.ticket=function(){
+  var seg='<div class="seg">'+[['event','🎤 イベント'],['ticket','🎟 チケット']].map(function(o){
+    return '<button class="'+(ui.tkMode===o[0]?'on':'')+'" data-act="setUi" data-k="tkMode" data-v="'+o[0]+'">'+o[1]+'</button>';
+  }).join('')+'</div>';
+  return seg+(ui.tkMode==='ticket'?viewTickets():viewEvents());
 };
 function ticketFiltered(){
   var toks=tokens(ui.tQ), t=todayStr();
   var list=db.tickets.filter(function(x){
     if(ui.tStatus&&x.status!==ui.tStatus)return false;
-    if(ui.tGroup&&x.group!==ui.tGroup)return false;
+    if(!gfMatch(ui.tGroup,x))return false;
+    if(ui.tSource&&x.source!==ui.tSource)return false;
+    if(ui.tResult==='win'&&x.result==='落選')return false;
+    if(ui.tResult==='lose'&&x.result!=='落選')return false;
     if(ui.tPeriod==='future'&&!((x.date||'')>=t))return false;
     if(ui.tPeriod==='past'&&!((x.date||'')&&x.date<t))return false;
     return matchItem(x,toks);
@@ -777,11 +996,14 @@ function ticketCard(x){
   var lost=x.result==='落選';
   var c=groupColor(x.group), dim=(lost||x.status==='不参戦'||x.attend==='不参戦')?' dim':'', link=safeUrl(x.qr);
   var h='<div class="card tk tap'+dim+'" style="--c:'+esc(c)+'" data-act="edit" data-kind="ticket" data-id="'+esc(x.id)+'">'
-    +'<div class="row between">'+(gchip(x.group)||'<span class="sub">グループ未設定</span>')
+    +'<div class="row between">'+(gchip(x.group,x.member)||'<span class="sub">グループ未設定</span>')
     +(lost?'<span class="badge" style="--b:#64748b">落選</span>':'<span class="badge" style="--b:'+(STATUS_COLOR[x.status]||'#94a3b8')+'">'+esc(x.status||'—')+'</span>')+'</div>'
     +'<div class="ttl">'+esc(x.title)+'</div>';
   if(x.date||x.time)h+='<div class="meta">📅 '+fmtD(x.date,true)+' '+esc(x.time||'')+'</div>';
   if(x.venue||x.pref)h+='<div class="meta">📍 '+esc(x.venue||'')+(x.pref?' ('+esc(x.pref)+')':'')+'</div>';
+  var ev0=eventOf(x), shop=[x.source,x.winMethod].filter(Boolean);
+  if(shop.length)h+='<div class="meta">🛒 '+shop.map(function(z){return esc(z)}).join(' / ')+'</div>';
+  if(ev0&&ev0.title!==x.title)h+='<div class="meta">🎤 '+esc(ev0.title)+'</div>';
   var pills='';
   if(x.seat)pills+='<button class="pill" data-act="copy" data-copy="'+esc(x.seat)+'">🪑 '+esc(x.seat)+' ⧉</button>';
   if(x.gate)pills+='<button class="pill" data-act="copy" data-copy="'+esc(x.gate)+'">🚪 '+esc(x.gate)+' ⧉</button>';
@@ -801,7 +1023,7 @@ function ticketCard(x){
   if(x.holder)info.push('名義: '+esc(x.holder));
   if(x.winMethod)info.push(esc(x.winMethod));
   if(info.length)h+='<div class="meta">🎟 '+info.join(' / ')+'</div>';
-  var st=[];if(x.attend)st.push(esc(x.attend));if(x.companions)st.push('同行: '+esc(x.companions));
+  var st=[];if(x.attend)st.push(x.attend==='参戦'?'★ 参戦':esc(x.attend));if(x.companions)st.push('同行: '+esc(x.companions));
   if(st.length)h+='<div class="meta">👥 '+st.join(' / ')+'</div>';
   var trl=tripsOf(x);
   if(trl.length)h+='<div class="meta">✈️ 遠征: '+trl.map(function(t){return esc(t.name)}).join(' / ')+'</div>';
@@ -819,6 +1041,62 @@ function renderTicketList(){
   var s=$('#tsum'), l=$('#tlist');if(!s||!l)return;
   s.textContent=list.length+'件 / 合計 '+yen(sum)+'(手数料込・落選を除く)';
   l.innerHTML=list.length?list.map(ticketCard).join(''):(db.tickets.length?'<div class="empty">条件に合うチケットがありません</div>':emptyBox('チケットがまだありません'));
+}
+
+/* ---- イベント(チケットの有無に関係なく登録) ---- */
+function viewEvents(){
+  var kopt=[['','全種別']].concat(EV_KINDS.map(function(k){return [k,k]}));
+  return '<div class="toolbar">'
+    +'<input class="search" type="search" enterkeyhint="search" placeholder="🔍 イベント名・会場・メンバーなどで検索" value="'+esc(ui.eQ)+'" data-bind="eQ" data-rf="event">'
+    +'<div class="row gap" style="margin-bottom:8px">'
+    +'<select data-bind="eGroup" data-rf="event">'+gfOptions(ui.eGroup)+'</select>'
+    +'<select data-bind="eKind" data-rf="event">'+kopt.map(function(o){return '<option value="'+esc(o[0])+'"'+(ui.eKind===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select>'
+    +'<select data-bind="ePeriod" data-rf="event">'+[['','全期間'],['future','今後'],['past','過去']].map(function(o){return '<option value="'+o[0]+'"'+(ui.ePeriod===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'
+    +'<div class="chips">'+[['','すべて'],['参戦','★ 参戦'],['検討中','検討中'],['見送り','見送り']].map(function(o){
+      return '<button class="'+(ui.eAttend===o[0]?'on':'')+'" data-act="setUi" data-k="eAttend" data-v="'+o[0]+'">'+o[1]+'</button>';
+    }).join('')+'</div></div>'
+    +'<div id="esum" class="sub" style="margin:0 2px 8px"></div><div id="elist"></div>';
+}
+function eventFiltered(){
+  var toks=tokens(ui.eQ), t=todayStr();
+  var list=db.events.filter(function(e){
+    if(ui.eAttend&&evAttend(e)!==ui.eAttend)return false;
+    if(ui.eKind&&e.kind!==ui.eKind)return false;
+    if(!gfMatch(ui.eGroup,e))return false;
+    var end=e.endDate||e.date||'9999-12-31';
+    if(ui.ePeriod==='future'&&end<t)return false;
+    if(ui.ePeriod==='past'&&!(e.date&&end<t))return false;
+    return matchItem(e,toks);
+  });
+  return orderEvents(list);
+}
+function eventCard(e){
+  var a=evAttend(e), tks=ticketsOfEvent(e), trl=tripsOfEvent(e), link=safeUrl(e.url);
+  var h='<div class="card tk tap'+(a==='見送り'?' dim':'')+(a==='参戦'?' going':'')+'" style="--c:'+esc(groupColor(e.group))+'" data-act="edit" data-kind="event" data-id="'+esc(e.id)+'">'
+    +'<div class="row between"><div>'+(gchip(e.group,e.member)||'<span class="sub">グループ未設定</span>')+'</div>'
+    +'<span class="badge" style="--b:'+ATT_COLOR[a]+'">'+(a==='参戦'?'★ ':'')+a+'</span></div>'
+    +'<div class="ttl">'+esc(e.title)+'</div>';
+  if(e.kind)h+='<div class="meta">🏷 '+esc(e.kind)+'</div>';
+  h+='<div class="meta">📅 '+(e.date?fmtD(e.date,true)+(e.endDate&&e.endDate>e.date?' 〜 '+fmtD(e.endDate,true):'')+(e.time?' '+esc(e.time):''):'日付未定')+'</div>';
+  if(e.venue||e.pref)h+='<div class="meta">📍 '+esc(e.venue||'')+(e.pref?' ('+esc(e.pref)+')':'')+'</div>';
+  if(tks.length){
+    var w=tks.filter(function(t){return t.result!=='落選'}).length;
+    h+='<div class="meta">🎟 チケット '+tks.length+'件(当選 '+w+' / 落選 '+(tks.length-w)+')</div>';
+  }else h+='<div class="meta">🎟 チケットなし</div>';
+  if(trl.length)h+='<div class="meta">✈️ 遠征: '+trl.map(function(t){return esc(t.name)}).join(' / ')+'</div>';
+  if(e.memo)h+='<div class="meta clamp" style="margin-top:6px">📝 '+esc(e.memo)+'</div>';
+  h+='<div class="seg" style="margin:10px 0 0">'+ATT_EV.map(function(v){
+    return '<button data-act="setAttend" data-id="'+esc(e.id)+'" data-v="'+v+'" class="'+(a===v?'on':'')+'">'+(v==='参戦'?'★ ':'')+v+'</button>';
+  }).join('')+'</div>';
+  h+='<div class="btnrow"><button class="btn ghost sm" data-act="addTicketFor" data-id="'+esc(e.id)+'">＋チケットを登録</button>'
+    +(link?'<a class="btn ghost sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer" data-act="noop">情報ページ</a>':'')+'</div>';
+  return h+'</div>';
+}
+function renderEventList(){
+  var l=$('#elist'), sm=$('#esum');if(!l||!sm)return;
+  var list=eventFiltered(), going=list.filter(function(e){return evAttend(e)==='参戦'}).length;
+  sm.textContent=list.length+'件(★参戦 '+going+'件)';
+  l.innerHTML=list.length?list.map(eventCard).join(''):(db.events.length?'<div class="empty">条件に合うイベントがありません</div>':emptyBox('イベント・公演がまだありません<br>チケットが無くても登録できます'));
 }
 
 /* ---- 名義 ---- */
@@ -889,6 +1167,9 @@ function renderTripList(){
     }
     var h='<div class="card tap'+(st==='終了'?' dim':'')+'" data-act="edit" data-kind="trip" data-id="'+esc(x.id)+'">'
       +'<div class="row between"><div class="ttl" style="margin:0">'+esc(x.name)+'</div>'+(st?'<span class="badge" style="--b:'+col+'">'+st+'</span>':'')+'</div>';
+    linkedEvents(x).forEach(function(e){
+      h+='<div class="meta">🎤 '+(evAttend(e)==='参戦'?'★ ':'')+esc(e.title)+' <span class="sub">'+esc([fmtD(e.date),e.venue].filter(Boolean).join(' '))+'</span></div>';
+    });
     linkedTickets(x).forEach(function(t){
       h+='<div class="meta">🎤 '+esc(t.title)+' <span class="sub">'+esc([fmtD(t.date),t.venue].filter(Boolean).join(' '))+'</span></div>';
     });
@@ -974,7 +1255,7 @@ function renderReportList(){
   if(!list.length){l.innerHTML=db.reports.length?'<div class="empty">条件に合うレポがありません</div>':emptyBox('レポがまだありません');return}
   l.innerHTML=list.map(function(x){
     return '<div class="card tk tap" style="--c:'+esc(groupColor(x.group))+'" data-act="viewReport" data-id="'+esc(x.id)+'">'
-      +'<div class="row between">'+(gchip(x.group)||'<span></span>')+'<span class="sub">'+fmtD(x.date,true)+'</span></div>'
+      +'<div class="row between">'+(gchip(x.group,x.member)||'<span></span>')+'<span class="sub">'+fmtD(x.date,true)+'</span></div>'
       +'<div class="ttl">'+esc(x.title)+'</div>'
       +(x.seat?'<div class="meta">🪑 '+esc(x.seat)+'</div>':'')
       +(x.impression?'<div class="meta clamp" style="margin-top:6px">'+esc(x.impression)+'</div>':'')+'</div>';
@@ -986,7 +1267,7 @@ function showReport(id){
   function sec(t,v){return v?'<div class="sec"><h4>'+t+'</h4><div class="pre">'+esc(v)+'</div></div>':''}
   openSheet('<div class="sheet-head"><button class="btn-text" data-act="closeSheet">閉じる</button><b>ライブレポ</b>'
     +'<button class="btn-text strong" data-act="edit" data-kind="report" data-id="'+esc(x.id)+'">編集</button></div>'
-    +'<div class="sheet-body"><div class="row between">'+(gchip(x.group)||'<span></span>')+'<span class="sub">'+fmtD(x.date,true)+'</span></div>'
+    +'<div class="sheet-body"><div class="row between">'+(gchip(x.group,x.member)||'<span></span>')+'<span class="sub">'+fmtD(x.date,true)+'</span></div>'
     +'<div class="ttl" style="font-size:19px">'+esc(x.title)+'</div>'
     +(x.seat?'<div class="meta">🪑 '+esc(x.seat)+'</div>':'')
     +(lines.length?'<div class="sec"><div class="row between"><h4>セトリ('+lines.length+'曲)</h4><button class="btn ghost sm" data-act="copy" data-copy="'+esc(lines.map(function(s,i){return (i+1)+'. '+s}).join('\n'))+'">コピー</button></div><ol class="set">'+lines.map(function(s){return '<li>'+esc(s)+'</li>'}).join('')+'</ol></div>':'')
@@ -996,27 +1277,34 @@ function showReport(id){
 /* ---- 設定 ---- */
 VIEWS.set=function(){
   var s=db.settings, bak=store.get(BAK), raw=store.get(KEY)||'';
-  var cnt=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length;
+  var cnt=db.tickets.length+db.names.length+db.trips.length+db.money.length+db.reports.length+db.events.length;
   var bakInfo='なし';
-  if(bak){try{var b=JSON.parse(bak);bakInfo='あり('+['tickets','names','trips','money','reports'].reduce(function(a,k){return a+(Array.isArray(b[k])?b[k].length:0)},0)+'件)'}catch(e){bakInfo='あり'}}
+  if(bak){try{var b=JSON.parse(bak);bakInfo='あり('+['tickets','names','trips','money','reports','events'].reduce(function(a,k){return a+(Array.isArray(b[k])?b[k].length:0)},0)+'件)'}catch(e){bakInfo='あり'}}
   var h='<div class="card"><h3>🎨 外観</h3><div class="sub" style="margin-bottom:4px">テーマ</div><div class="seg">'
     +[['auto','自動'],['light','ライト'],['dark','ダーク']].map(function(o){return '<button class="'+(s.theme===o[0]?'on':'')+'" data-act="setTheme" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>'
     +'<div class="sub" style="margin-bottom:4px">アクセントカラー</div><div class="seg">'
     +Object.keys(ACCENTS).map(function(k){return '<button class="'+(s.accent===k?'on':'')+'" data-act="setAccent" data-v="'+k+'">'+ACCENTS[k].n+'</button>'}).join('')+'</div></div>';
-  h+='<div class="card"><h3>🌈 グループカラー</h3>'
+  h+='<div class="card"><h3>🌈 グループ・メンバー</h3><div class="sub" style="margin-bottom:6px">グループの下にメンバー(個人)を登録すると、個人仕事も「グループ › メンバー」で登録・絞り込みできます。色は左の四角をタップして変更。</div>'
     +(s.groups.length?s.groups.map(function(g,i){
-      return '<div class="grow-row"><input type="color" value="'+esc(g.color)+'" data-gc="'+i+'" aria-label="'+esc(g.name)+'の色"><span class="nm">'+esc(g.name)+'</span>'
+      return '<div class="gblock"><div class="grow-row"><input type="color" value="'+esc(g.color)+'" data-gc="'+i+'" aria-label="'+esc(g.name)+'の色"><span class="nm">'+esc(g.name)+'</span>'
         +'<button class="btn ghost sm" data-act="gRename" data-i="'+i+'">名前変更</button>'
-        +'<button class="btn line sm" data-act="gDel" data-i="'+i+'">削除</button></div>';
+        +'<button class="btn line sm" data-act="gDel" data-i="'+i+'">削除</button></div>'
+        +'<div class="mchips">'+g.members.map(function(m,j){
+          return '<span class="chip" style="--c:'+esc(g.color)+';padding-right:2px"><i></i><button data-act="mRename" data-i="'+i+'" data-j="'+j+'" style="font-weight:600;font-size:12px">'+esc(m)+'</button>'
+            +'<button data-act="mDel" data-i="'+i+'" data-j="'+j+'" aria-label="'+esc(m)+'を削除" style="color:var(--sub)">×</button></span>';
+        }).join('')+'</div>'
+        +'<div class="grow-row"><input type="text" data-mname="'+i+'" placeholder="メンバー(個人)を追加" style="flex:1"><button class="btn ghost sm" data-act="mAdd" data-i="'+i+'">追加</button></div></div>';
     }).join(''):'<div class="sub">グループがありません</div>')
-    +'<div class="grow-row" style="margin-top:6px"><input type="color" id="gColor" value="'+NEW_COLORS[s.groups.length%NEW_COLORS.length]+'" aria-label="新しいグループの色">'
+    +'<div class="grow-row" style="margin-top:8px;border-top:1px solid var(--line);padding-top:10px"><input type="color" id="gColor" value="'+NEW_COLORS[s.groups.length%NEW_COLORS.length]+'" aria-label="新しいグループの色">'
     +'<input type="text" id="gName" placeholder="グループ名を追加" style="flex:1"><button class="btn sm" data-act="gAdd">追加</button></div>'
-    +'<div class="sub" style="margin-top:6px">色は左の丸をタップして変更。名前を変えると、チケット・名義・レポのグループ名も一緒に変わります。削除してもデータは消えません(色が灰色になります)</div></div>';
-  h+='<div class="card"><h3>🏷 当選方法の候補</h3><div class="sub" style="margin-bottom:6px">チケット入力の「当選方法」で選べる候補です</div>'
-    +(s.winMethods.length?'<div class="glegend">'+s.winMethods.map(function(w,i){
-      return '<span class="chip" style="padding-right:4px">'+esc(w)+'<button data-act="wmDel" data-i="'+i+'" aria-label="'+esc(w)+'を削除" style="width:28px;height:28px;font-size:16px;color:var(--sub)">×</button></span>';
-    }).join('')+'</div>':'<div class="sub">候補がありません</div>')
-    +'<div class="grow-row" style="margin-top:8px"><input type="text" id="wmName" placeholder="候補を追加(例: ファンクラブ先行)" style="flex:1"><button class="btn sm" data-act="wmAdd">追加</button></div></div>';
+    +'<div class="sub" style="margin-top:6px">名前を変えると、イベント・チケット・名義・レポの表示も一緒に変わります。削除してもデータは消えません(色が灰色になります)。</div></div>';
+  h+='<div class="card"><h3>🛒 購入元と手数料</h3><div class="sub" style="margin-bottom:6px">チケット登録で購入元を選ぶと、ここの手数料が自動で入ります(あとから書き換え可)。金額は購入元・公演で変わるので、よく使うものだけ入れておいてください。</div>'
+    +s.sources.map(function(x,i){
+      return '<div class="gblock"><div class="row between"><b>'+esc(x.name)+'</b><button class="btn line sm" data-act="srcDel" data-i="'+i+'">削除</button></div>'
+        +'<div class="fgrid" style="margin-top:6px"><div class="f half"><label>1枚ごとの手数料(円)</label><input type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(x.perTicket||'')+'" data-src="'+i+'" data-sf="perTicket"></div>'
+        +'<div class="f half"><label>1申込ごとの手数料(円)</label><input type="number" inputmode="numeric" min="0" step="1" placeholder="0" value="'+(x.perOrder||'')+'" data-src="'+i+'" data-sf="perOrder"></div></div></div>';
+    }).join('')
+    +'<div class="grow-row" style="margin-top:8px;border-top:1px solid var(--line);padding-top:10px"><input type="text" id="srcName" placeholder="購入元を追加(例: カンフェティ)" style="flex:1"><button class="btn sm" data-act="srcAdd">追加</button></div></div>';
   h+='<div class="card"><h3>💾 データ管理</h3>'
     +'<div class="kv"><span>登録データ</span><b>'+cnt+'件</b></div>'
     +'<div class="kv"><span>使用容量(目安)</span><b>約'+Math.max(1,Math.round(raw.length*2/1024))+'KB / 約5000KB</b></div>'
@@ -1039,16 +1327,16 @@ VIEWS.set=function(){
 function render(keepScroll){
   var v=$('#view'), st=keepScroll?v.scrollTop:0;
   Array.prototype.forEach.call(document.querySelectorAll('#nav button'),function(b){b.classList.toggle('on',b.getAttribute('data-v')===ui.tab)});
-  $('#topSub').textContent=TOPSUB[ui.tab]||'';
+  $('#topSub').textContent=(ui.tab==='ticket'?(ui.tkMode==='event'?'イベント':'チケット'):TOPSUB[ui.tab])||'';
   $('#fab').classList.toggle('hide',ui.tab==='set');
   v.innerHTML=VIEWS[ui.tab]();
-  if(ui.tab==='ticket')renderTicketList();
+  if(ui.tab==='ticket'){if(ui.tkMode==='ticket')renderTicketList();else renderEventList()}
   if(ui.tab==='name')renderNameList();
   if(ui.tab==='trip')renderTripList();
   if(ui.tab==='report')renderReportList();
   v.scrollTop=st;
 }
-var REFRESH={ticket:renderTicketList,name:renderNameList,report:renderReportList};
+var REFRESH={ticket:renderTicketList,event:renderEventList,name:renderNameList,report:renderReportList};
 
 /* ---------- G. アクション ---------- */
 var A={};
@@ -1080,6 +1368,7 @@ A.fab=function(){
     var dt=ui.calSel||todayStr();
     openSheet('<div class="sheet-head"><button class="btn-text" data-act="closeSheet">閉じる</button><b>追加する</b><span style="width:56px"></span></div>'
       +'<div class="sheet-body"><div class="sub" style="margin-bottom:10px">'+fmtD(dt,true)+' に追加します</div><div class="choose">'
+      +'<button data-act="addOn" data-kind="event" data-date="'+dt+'"><span>🎤</span>イベント</button>'
       +'<button data-act="addOn" data-kind="ticket" data-date="'+dt+'"><span>🎟</span>チケット</button>'
       +'<button data-act="addOn" data-kind="trip" data-date="'+dt+'"><span>✈️</span>遠征</button>'
       +'<button data-act="addOn" data-kind="money" data-date="'+dt+'"><span>💰</span>収支</button>'
@@ -1087,20 +1376,29 @@ A.fab=function(){
       +'<button data-act="addOn" data-kind="name" data-date="'+dt+'"><span>👤</span>名義</button></div></div>');
     return;
   }
-  openForm(ui.tab,null);
+  openForm(ui.tab==='ticket'?(ui.tkMode==='event'?'event':'ticket'):ui.tab,null);
 };
 A.edit=function(d){openForm(d.kind,d.id)};
+A.setAttend=function(d){
+  var e=db.events.filter(function(x){return x.id===d.id})[0];if(!e)return;
+  e.attend=d.v;e.updatedAt=Date.now();save();render(true);
+};
+A.addTicketFor=function(d){
+  var e=db.events.filter(function(x){return x.id===d.id})[0];if(!e)return;
+  openForm('ticket',null,{eventId:e.id,title:e.title,group:e.group,member:e.member,date:e.date,time:e.time,venue:e.venue,pref:e.pref});
+};
 A.viewReport=function(d){showReport(d.id)};
 A.saveForm=function(){
   if(!ui.form)return;
   var kind=ui.form.kind, id=ui.form.id, spec=FORMS[kind], o=readForm(spec);
+  if(kind==='ticket'&&!o.title&&o.eventId){var evx=db.events.filter(function(x){return x.id===o.eventId})[0];if(evx)o.title=evx.title}
   var miss=spec.fields.filter(function(f){return f.req&&(o[f.k]===''||o[f.k]==null)})[0];
   if(miss){toast(miss.l+'を入力してください');return}
+  if(kind==='event'&&o.date&&o.endDate&&o.endDate<o.date){toast('終了日は開始日以降にしてください');return}
   var coll=db[COLL[kind]], item, isNew=!id;
   if(id){item=coll.filter(function(x){return x.id===id})[0];if(!item){closeSheet();return}Object.assign(item,o);item.updatedAt=Date.now()}
   else{item=Object.assign({id:uid(),createdAt:Date.now()},o);coll.push(item)}
-  if(o.group)ensureGroup(o.group);
-  if(kind==='ticket'&&o.winMethod&&db.settings.winMethods.indexOf(o.winMethod)<0)db.settings.winMethods.push(o.winMethod);
+  if(o.group){ensureGroup(o.group);if(o.member)ensureMember(o.group,o.member)}
   save();closeSheet();render(true);toast(isNew?'登録しました':'保存しました');
   if(kind==='ticket'&&isNew&&o.result!=='落選'&&tkTotal(o)>0){
     var tot=tkTotal(o);
@@ -1118,6 +1416,10 @@ A.delItem=function(){
     if(!ok)return;
     var coll=db[COLL[kind]];
     db[COLL[kind]]=coll.filter(function(x){return x.id!==id});
+    if(kind==='event'){   // イベントを消したら、チケット・遠征の紐づけも外す
+      db.tickets.forEach(function(t){if(t.eventId===id)t.eventId=''});
+      db.trips.forEach(function(t){if(Array.isArray(t.eventIds))t.eventIds=t.eventIds.filter(function(z){return z!==id})});
+    }
     save();closeSheet();render(true);toast('削除しました');
   });
 };
@@ -1141,7 +1443,7 @@ A.gAdd=function(){
   var n=($('#gName').value||'').trim(), c=$('#gColor').value;
   if(!n){toast('グループ名を入力してください');return}
   if(db.settings.groups.some(function(g){return g.name===n})){toast('同じ名前のグループがあります');return}
-  db.settings.groups.push({name:n,color:c});save();render(true);toast('追加しました');
+  db.settings.groups.push({name:n,color:c,members:[]});save();render(true);toast('追加しました');
 };
 A.gRename=function(d){
   var g=db.settings.groups[Number(d.i)];if(!g)return;
@@ -1158,16 +1460,55 @@ A.gRenameSave=function(d){
   if(nn===old){closeSheet();return}
   if(db.settings.groups.some(function(x){return x.name===nn})){toast('同じ名前のグループがあります');return}
   var n=0;
-  ['tickets','names','reports'].forEach(function(k){db[k].forEach(function(x){if(x.group===old){x.group=nn;n++}})});
+  ['tickets','names','reports','events'].forEach(function(k){db[k].forEach(function(x){if(x.group===old){x.group=nn;n++}})});
   g.name=nn;save();closeSheet();render(true);toast('変更しました('+n+'件のデータにも反映)');
 };
-A.wmAdd=function(){
-  var v=($('#wmName').value||'').trim();
-  if(!v){toast('候補を入力してください');return}
-  if(db.settings.winMethods.indexOf(v)>=0){toast('同じ候補があります');return}
-  db.settings.winMethods.push(v);save();render(true);
+A.srcAdd=function(){
+  var n=($('#srcName').value||'').trim();
+  if(!n){toast('購入元の名前を入力してください');return}
+  if(db.settings.sources.some(function(x){return x.name===n})){toast('同じ名前があります');return}
+  db.settings.sources.push({name:n,perTicket:0,perOrder:0});save();render(true);
 };
-A.wmDel=function(d){db.settings.winMethods.splice(Number(d.i),1);save();render(true)};
+A.srcDel=function(d){
+  var x=db.settings.sources[Number(d.i)];if(!x)return;
+  confirmDlg('購入元「'+x.name+'」を削除しますか？\n登録済みのチケットの購入元表示は残ります。','削除する',true).then(function(ok){
+    if(!ok)return;db.settings.sources.splice(Number(d.i),1);save();render(true);
+  });
+};
+A.mAdd=function(d){
+  var g=db.settings.groups[Number(d.i)];if(!g)return;
+  var el=document.querySelector('[data-mname="'+Number(d.i)+'"]'), n=el?(el.value||'').trim():'';
+  if(!n){toast('メンバー名を入力してください');return}
+  if(g.members.indexOf(n)>=0){toast('同じ名前のメンバーがいます');return}
+  g.members.push(n);save();render(true);
+};
+A.mDel=function(d){
+  var g=db.settings.groups[Number(d.i)];if(!g)return;
+  var m=g.members[Number(d.j)];if(m==null)return;
+  confirmDlg('メンバー「'+m+'」を削除しますか？\n登録済みのデータは消えません(メンバー名の表示は残ります)。','削除する',true).then(function(ok){
+    if(!ok)return;g.members.splice(Number(d.j),1);save();render(true);
+  });
+};
+A.mRename=function(d){
+  var g=db.settings.groups[Number(d.i)];if(!g)return;
+  var m=g.members[Number(d.j)];if(m==null)return;
+  openSheet('<div class="sheet-head"><button class="btn-text" data-act="closeSheet">キャンセル</button><b>メンバー名の変更</b>'
+    +'<button class="btn-text strong" data-act="mRenameSave" data-i="'+Number(d.i)+'" data-j="'+Number(d.j)+'">保存</button></div>'
+    +'<div class="sheet-body"><div class="f"><label for="gRenameIn">メンバー名('+esc(g.name)+')</label><input id="gRenameIn" type="text" value="'+esc(m)+'" autocomplete="off"></div>'
+    +'<div class="sub" style="margin-top:10px">入力済みのイベント・チケット・レポの「'+esc(m)+'」も新しい名前に変わります。</div></div>');
+  setTimeout(function(){var i=$('#gRenameIn');if(i){i.focus();i.select()}},60);
+};
+A.mRenameSave=function(d){
+  var g=db.settings.groups[Number(d.i)];if(!g)return;
+  var old=g.members[Number(d.j)], nn=($('#gRenameIn').value||'').trim();
+  if(old==null)return;
+  if(!nn){toast('メンバー名を入力してください');return}
+  if(nn===old){closeSheet();return}
+  if(g.members.indexOf(nn)>=0){toast('同じ名前のメンバーがいます');return}
+  var n=0;
+  ['tickets','reports','events'].forEach(function(k){db[k].forEach(function(x){if(x.group===g.name&&x.member===old){x.member=nn;n++}})});
+  g.members[Number(d.j)]=nn;save();closeSheet();render(true);toast('変更しました('+n+'件のデータにも反映)');
+};
 A.gDel=function(d){
   var g=db.settings.groups[Number(d.i)];if(!g)return;
   confirmDlg('「'+g.name+'」を削除しますか？\n登録済みのデータは消えません。','削除する',true).then(function(ok){
@@ -1185,6 +1526,7 @@ function renderSearch(){
   var q=$('#gq').value, toks=tokens(q), box=$('#sres');
   if(!toks.length){box.innerHTML='<div class="empty">キーワードを入力してください</div>';return}
   var defs=[
+    {kind:'event',coll:'events',ic:'🎤',title:function(x){return x.title},sub:function(x){return [fmtD(x.date,true),x.venue,evAttend(x)].filter(Boolean).join(' / ')}},
     {kind:'ticket',coll:'tickets',ic:'🎟',title:function(x){return x.title},sub:function(x){return [fmtD(x.date,true),x.venue,x.holder].filter(Boolean).join(' / ')}},
     {kind:'name',coll:'names',ic:'👤',title:function(x){return x.name},sub:function(x){return [x.group,x.memberNo].filter(Boolean).join(' / ')}},
     {kind:'trip',coll:'trips',ic:'✈️',title:function(x){return x.name},sub:function(x){return [fmtD(x.depart,true),x.show].filter(Boolean).join(' / ')}},
@@ -1195,7 +1537,7 @@ function renderSearch(){
   defs.forEach(function(df){
     var rs=db[df.coll].filter(function(x){
       // 遠征は紐づけた公演名でも検索できるようにする
-      return matchItem(df.kind==='trip'?Object.assign({},x,{_t:linkedTickets(x).map(function(t){return t.title}).join(' ')}):x,toks);
+      return matchItem(df.kind==='trip'?Object.assign({},x,{_t:linkedTickets(x).concat(linkedEvents(x)).map(function(t){return t.title}).join(' ')}):x,toks);
     });
     if(!rs.length)return;total+=rs.length;
     html+='<div class="sres-h">'+df.ic+' '+KIND_LABEL[df.kind]+'('+rs.length+')</div>'
@@ -1240,7 +1582,7 @@ function importText(text){
   var nd;
   try{nd=parseBackup(text)}catch(e){toast(e.message);return}
   var c=function(k){return nd[k].length};
-  confirmDlg('このバックアップで現在のデータを置き換えますか？\n\nチケット '+c('tickets')+' / 名義 '+c('names')+' / 遠征 '+c('trips')+' / 収支 '+c('money')+' / レポ '+c('reports')
+  confirmDlg('このバックアップで現在のデータを置き換えますか？\n\nチケット '+c('tickets')+' / 名義 '+c('names')+' / 遠征 '+c('trips')+' / 収支 '+c('money')+' / レポ '+c('reports')+' / イベント '+c('events')
     +'\n\n※置き換え前の状態は「自動バックアップ」に残ります','復元する',true).then(function(ok){
     if(!ok)return;
     db=nd;save();applyTheme();render(false);toast('復元しました');
@@ -1327,13 +1669,20 @@ function bindEvents(){
   }
   // テキスト入力は input のみ、セレクトは change のみで処理する。
   // (入力欄の blur で change が走ると、直後のタップ対象が再描画で消えてタップが無効になるため)
+  document.addEventListener('keydown',function(e){
+    var t=e.target;
+    if(e.key==='Enter'&&t.getAttribute&&t.getAttribute('data-mname')!=null){e.preventDefault();A.mAdd({i:t.getAttribute('data-mname')})}
+  });
   document.addEventListener('input',function(e){
     if(e.target.tagName!=='SELECT')onBind(e);
+    formInput(e);
     var gc=e.target.getAttribute&&e.target.getAttribute('data-gc');
     if(gc!=null){var g=db.settings.groups[Number(gc)];if(g){g.color=e.target.value;save()}}
   });
   document.addEventListener('change',function(e){
     if(e.target.tagName==='SELECT')onBind(e);
+    formChange(e);
+    settingsChange(e);
     if(e.target.getAttribute&&e.target.getAttribute('data-gc')!=null)render(true);
   });
   $('#fileIn').addEventListener('change',function(e){
