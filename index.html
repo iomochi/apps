@@ -228,6 +228,11 @@ ol.set li{padding:2px 0}
 .gblock{padding:10px 0;border-top:1px solid var(--line)}
 .mchips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px 52px}
 .mchips .chip button{min-height:32px;padding:0 8px;color:inherit}
+.maplink{display:inline-block;margin-left:6px;padding:1px 9px;border-radius:99px;background:var(--soft);color:var(--text);font-size:12px;font-weight:700;text-decoration:none}
+.meta.warn,.warn{color:#d97706;font-weight:700}
+.ap{padding:10px 0;border-top:1px solid var(--line)}
+.ap.hot{background:var(--soft);border-radius:12px;padding:10px 12px;border-top:0;margin:6px 0}
+.dot.ann{background:var(--c,#f59e0b);border-radius:2px;transform:rotate(45deg)}
 </style>
 </head>
 <body>
@@ -289,11 +294,40 @@ var STATUSES=['自名義','借用名義','同行','配布済','譲渡済','不�
 var STATUS_COLOR={'自名義':'#ec4899','借用名義':'#8b5cf6','同行':'#3b82f6','配布済':'#16a34a','譲渡済':'#f59e0b','不参戦':'#94a3b8'};
 var ATTENDS=['参戦','不参戦','未定'];
 var RESULTS=['当選','落選'];
+var RESULT_OPTS=[{v:'当落待ち',l:'申込済(当落待ち)'},{v:'当選',l:'当選'},{v:'落選',l:'落選'}];
+var PAY_OPTS=[{v:'',l:'未設定'},'未入金','入金済'];
 var ATT_EV=['参戦','検討中','見送り'];
 var ATT_COLOR={'参戦':'var(--primary)','検討中':'#f59e0b','見送り':'#94a3b8'};
 var EV_KINDS=['コンサート・ライブ','ファンミ・イベント','舞台・ミュージカル','ドラマ・映画','TV・ラジオ','雑誌・WEB','配信','その他'];
 var RECEPTIONS=['先行','一般発売','二次・追加販売','当日券','リセール','譲渡・同行','その他'];
 var DEFAULT_SOURCES=['FC','ぴあ','ローチケ','イープラス','公式(一般)','リセール・譲渡','その他'];
+var VENUES=[
+  ['東京ドーム','東京都'],['国立競技場','東京都'],['日本武道館','東京都','武道館'],['有明アリーナ','東京都'],['東京ガーデンシアター','東京都'],
+  ['国立代々木競技場','東京都','代々木'],['東京国際フォーラム','東京都'],['Zepp DiverCity','東京都'],['Zepp Haneda','東京都'],['Zepp Shinjuku','東京都'],
+  ['東京体育館','東京都'],['LINE CUBE SHIBUYA','東京都','渋谷公会堂'],['中野サンプラザ','東京都'],['NHKホール','東京都'],['帝国劇場','東京都'],
+  ['日生劇場','東京都'],['東京芸術劇場','東京都'],['新国立劇場','東京都'],['東急シアターオーブ','東京都','シアターオーブ'],['両国国技館','東京都','国技館'],
+  ['東京ビッグサイト','東京都','ビッグサイト'],['味の素スタジアム','東京都'],['武蔵野の森総合スポーツプラザ','東京都','武蔵野の森'],['明治座','東京都'],
+  ['歌舞伎座','東京都'],['新橋演舞場','東京都'],['シアタークリエ','東京都'],['TACHIKAWA STAGE GARDEN','東京都'],
+  ['横浜アリーナ','神奈川県'],['日産スタジアム','神奈川県'],['ぴあアリーナMM','神奈川県'],['Kアリーナ横浜','神奈川県'],['横浜スタジアム','神奈川県'],
+  ['KT Zepp Yokohama','神奈川県','Zepp Yokohama'],
+  ['さいたまスーパーアリーナ','埼玉県'],['ベルーナドーム','埼玉県','西武ドーム'],['埼玉スタジアム2002','埼玉県','埼玉スタジアム'],
+  ['幕張メッセ','千葉県'],['ZOZOマリンスタジアム','千葉県','ZOZOマリン'],['ららアリーナ東京ベイ','千葉県','ららアリーナ'],
+  ['京セラドーム大阪','大阪府','京セラドーム'],['大阪城ホール','大阪府'],['Zepp Osaka Bayside','大阪府','Zepp Osaka'],['Zepp Namba','大阪府'],
+  ['フェスティバルホール','大阪府'],['梅田芸術劇場','大阪府'],['丸善インテックアリーナ大阪','大阪府','丸善インテックアリーナ'],
+  ['大阪国際会議場','大阪府','グランキューブ大阪'],['ヤンマースタジアム長居','大阪府'],['SkyシアターMBS','大阪府'],
+  ['GLION ARENA KOBE','兵庫県','グリオンアリーナ'],['神戸ワールド記念ホール','兵庫県','ワールド記念ホール'],['阪神甲子園球場','兵庫県','甲子園'],
+  ['バンテリンドーム ナゴヤ','愛知県','バンテリンドーム','ナゴヤドーム'],['IGアリーナ','愛知県'],['日本ガイシホール','愛知県'],
+  ['ポートメッセなごや','愛知県'],['Zepp Nagoya','愛知県'],['豊田スタジアム','愛知県'],
+  ['みずほPayPayドーム福岡','福岡県','PayPayドーム'],['マリンメッセ福岡','福岡県'],['福岡国際センター','福岡県'],['Zepp Fukuoka','福岡県'],
+  ['札幌ドーム','北海道'],['北海きたえーる','北海道'],['Zepp Sapporo','北海道'],
+  ['セキスイハイムスーパーアリーナ','宮城県','グランディ21'],['ゼビオアリーナ仙台','宮城県'],
+  ['広島グリーンアリーナ','広島県'],['MAZDA Zoom-Zoom スタジアム広島','広島県','マツダスタジアム'],
+  ['静岡エコパアリーナ','静岡県','エコパ'],['朱鷺メッセ','新潟県']
+];
+var CITY_ALIASES=[['横浜','神奈川県'],['川崎','神奈川県'],['横須賀','神奈川県'],['さいたま','埼玉県'],['大宮','埼玉県'],['所沢','埼玉県'],
+  ['幕張','千葉県'],['舞浜','千葉県'],['名古屋','愛知県'],['神戸','兵庫県'],['西宮','兵庫県'],['宝塚','兵庫県'],['博多','福岡県'],['札幌','北海道'],
+  ['仙台','宮城県'],['那覇','沖縄県'],['金沢','石川県'],['松山','愛媛県'],['高松','香川県'],['宇都宮','栃木県'],['水戸','茨城県'],
+  ['郡山','福島県'],['盛岡','岩手県'],['浜松','静岡県'],['立川','東京都'],['渋谷','東京都'],['新宿','東京都'],['池袋','東京都']];
 var MCATS=['チケット','交通','宿泊','グッズ','飲食','その他'];
 var WD=['日','月','火','水','木','金','土'];
 var COLL={ticket:'tickets',name:'names',trip:'trips',money:'money',report:'reports',event:'events'};
@@ -350,7 +384,7 @@ var store={
 function defaults(){
   return {version:1,settings:{theme:'auto',accent:'pink',lastBackup:null,
     groups:clone(DEFAULT_GROUPS).map(function(g){g.members=[];return g}),
-    sources:DEFAULT_SOURCES.map(function(n){return {name:n,perTicket:0,perOrder:0}})},
+    sources:DEFAULT_SOURCES.map(function(n){return {name:n,perTicket:0,perOrder:0}}),homePref:''},
     tickets:[],names:[],trips:[],money:[],reports:[],events:[]};
 }
 function normalize(d){
@@ -358,6 +392,7 @@ function normalize(d){
   b.settings.theme=['auto','light','dark'].indexOf(s.theme)>=0?s.theme:'auto';
   b.settings.accent=ACCENTS[s.accent]?s.accent:'pink';
   b.settings.lastBackup=s.lastBackup||null;
+  b.settings.homePref=(typeof s.homePref==='string'&&PREFS.indexOf(s.homePref)>=0)?s.homePref:'';
   if(Array.isArray(s.groups)){
     b.settings.groups=s.groups.filter(function(g){return g&&typeof g.name==='string'&&g.name}).map(function(g){
       var ms=Array.isArray(g.members)?g.members.filter(function(m,i,a){return typeof m==='string'&&m&&a.indexOf(m)===i}):[];
@@ -509,22 +544,26 @@ var FORMS={
     {k:'group',l:'グループ',t:'group',half:1},{k:'member',l:'メンバー(個人)',t:'member',half:1,hint:'グループ全体なら空欄。個人仕事はメンバー名を選択/入力'},
     {k:'attend',l:'参戦の予定',t:'select',opts:ATT_EV},
     {k:'date',l:'開始日',t:'date',half:1},{k:'endDate',l:'終了日(期間がある場合)',t:'date',half:1},
+    {k:'venue',l:'会場',t:'venue'},
     {k:'time',l:'開演時間',t:'time',half:1},{k:'pref',l:'都道府県',t:'select',half:1,opts:[{v:'',l:'選択なし'}].concat(PREFS)},
-    {k:'venue',l:'会場',t:'text'},
     {k:'url',l:'情報ページURL',t:'url',ph:'https://...'},
     {k:'memo',l:'メモ',t:'textarea'}
   ]},
-  ticket:{title:'チケット',def:function(){return {attend:'参戦',status:'自名義',count:1,result:'当選'}},fields:[
+  ticket:{title:'チケット',def:function(){return {attend:'参戦',status:'自名義',count:1,result:'当落待ち',appliedDate:todayStr()}},fields:[
     {k:'_h1',l:'🎤 公演',t:'hdr'},
     {k:'eventId',l:'イベントに紐づけ(任意)',t:'select',opts:eventOpts},
     {k:'group',l:'グループ名',t:'group',half:1},{k:'member',l:'メンバー(個人)',t:'member',half:1},
     {k:'title',l:'公演名',t:'text',req:1},
     {k:'date',l:'日付',t:'date',half:1},{k:'time',l:'時間',t:'time',half:1},
-    {k:'venue',l:'会場',t:'text'},
+    {k:'venue',l:'会場',t:'venue'},
     {k:'pref',l:'都道府県',t:'select',opts:[{v:'',l:'選択なし'}].concat(PREFS)},
+    {k:'_h5',l:'📮 申込管理',t:'hdr'},
+    {k:'result',l:'申込状況(必須)',t:'select',opts:RESULT_OPTS,req:1,hint:'申込んだら「申込済(当落待ち)」。結果が出たら当選/落選に変えると、勝率に反映されます。'},
+    {k:'appliedDate',l:'申込日',t:'date',half:1},{k:'resultDate',l:'当落発表日',t:'date',half:1},
+    {k:'payDeadline',l:'入金・発券期限',t:'date',half:1},{k:'payStatus',l:'入金状況',t:'select',half:1,opts:PAY_OPTS},
     {k:'_h2',l:'🛒 購入・金額',t:'hdr'},
     {k:'source',l:'購入元',t:'select',half:1,opts:sourceOpts},{k:'winMethod',l:'受付の種類',t:'select',half:1,opts:receptionOpts},
-    {k:'result',l:'申込結果(勝率に反映)',t:'select',half:1,opts:RESULTS},{k:'count',l:'枚数',t:'number',half:1},
+    {k:'count',l:'枚数',t:'number',half:1},
     {k:'price',l:'金額(1枚・円)',t:'number',half:1},{k:'fee',l:'手数料(1枚ごと・円)',t:'number',half:1},
     {k:'orderFee',l:'手数料(1申込ごと・円)',t:'number',half:1},
     {k:'_fp',t:'feeprev'},
@@ -577,7 +616,7 @@ var FORMS={
     {k:'memo',l:'メモ',t:'textarea'}
   ]}
 };
-function fieldHtml(f,v){
+function fieldHtml(f,v,row){
   if(f.t==='hdr')return '<div class="fh">'+esc(f.l)+'</div>';
   if(f.t==='feeprev')return '<div class="f"><div class="feeprev" id="feePrev"></div><div class="hint">1枚ごと=発券手数料など / 1申込ごと=システム利用料・事務手数料など(申込全体で1回)。購入元を選ぶと、設定画面に登録した手数料が自動で入ります。</div></div>';
   var id='f_'+f.k, val=(v==null?'':v), inp='', ph=f.ph?' placeholder="'+esc(f.ph)+'"':'';
@@ -597,15 +636,20 @@ function fieldHtml(f,v){
       inp='<input id="'+id+'" name="'+f.k+'" type="'+f.t+'" value="'+esc(val)+'">';break;
     case 'url':
       inp='<input id="'+id+'" name="'+f.k+'" type="url" inputmode="url" autocapitalize="none" autocorrect="off" value="'+esc(val)+'"'+ph+'>';break;
-    case 'group':
-      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_group" autocomplete="off" value="'+esc(val)+'" placeholder="選択または入力">';break;
+    case 'group':   // 登録済み・使用済みのグループをプルダウンで選択(新規は「＋新しいグループを入力」)
+      inp='<select id="'+id+'" name="'+f.k+'">'+selOptions(groupNames(),String(val),'未設定','＋新しいグループを入力…')+'</select>'
+        +'<input type="text" id="'+id+'_new" name="'+f.k+'_new" placeholder="新しいグループ名" autocomplete="off" style="display:none;margin-top:6px">';break;
+    case 'venue':
+      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_venue" autocomplete="off" value="'+esc(val)+'" placeholder="会場名">'
+        +'<div class="row gap" style="margin-top:6px"><button type="button" class="btn ghost sm" data-act="openMap">🗺 地図で開く</button><span class="hint" style="margin:0">会場名から都道府県を自動入力します</span></div>';break;
     case 'holder':
       inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_holder" autocomplete="off" value="'+esc(val)+'" placeholder="登録済み名義から選択／入力">';break;
     case 'member':
-      inp='<input id="'+id+'" name="'+f.k+'" type="text" list="dl_member" autocomplete="off" value="'+esc(val)+'" placeholder="選択/入力">';break;
+      inp='<select id="'+id+'" name="'+f.k+'">'+selOptions(memberNames(row&&row.group),String(val),'グループ全体(個人なし)','＋新しいメンバーを入力…')+'</select>'
+        +'<input type="text" id="'+id+'_new" name="'+f.k+'_new" placeholder="新しいメンバー名" autocomplete="off" style="display:none;margin-top:6px">';break;
     case 'ticketlinks':
       var sel=Array.isArray(v)?v:[];
-      var tl=db.tickets.filter(function(t){return (!t.eventId&&t.result!=='落選')||sel.indexOf(t.id)>=0})
+      var tl=db.tickets.filter(function(t){return (!t.eventId&&tkResult(t)!=='落選')||sel.indexOf(t.id)>=0})
         .sort(function(a,b){return (a.date||'9999').localeCompare(b.date||'9999')});
       inp=tl.length?'<div class="links">'+tl.map(function(t){
         return '<label class="lk"><input type="checkbox" name="'+f.k+'" value="'+esc(t.id)+'"'+(sel.indexOf(t.id)>=0?' checked':'')+'><span><b>'+esc(t.title||'(無題)')+'</b><br><small class="sub">'
@@ -629,33 +673,40 @@ function datalists(){
   function dl(id,arr){return '<datalist id="'+id+'">'+arr.map(function(x){return '<option value="'+esc(x)+'">'}).join('')+'</datalist>'}
   return dl('dl_group',db.settings.groups.map(function(g){return g.name}))
     +dl('dl_holder',db.names.map(function(n){return n.name}))
-    +'<datalist id="dl_member"></datalist>';
+    +dl('dl_venue',venueSuggestions());
 }
 function openForm(kind,id,preset){
   var spec=FORMS[kind], item=null;
   if(id){item=db[COLL[kind]].filter(function(x){return x.id===id})[0];if(!item)return}
   var base=item||Object.assign({},spec.def(),preset||{});
+  if(kind==='ticket'&&item&&!item.result)base=Object.assign({},item,{result:'当選'});   // 旧データ(申込状況なし)は当選扱い
   // 新規の遠征は、出発日と同じ日の公演チケットをあらかじめ選択しておく
   if(kind==='trip'&&!item&&base.depart&&!base.ticketIds&&!base.eventIds){
     base.eventIds=db.events.filter(function(e){return e.date&&e.date<=base.depart&&(e.endDate||e.date)>=base.depart&&evAttend(e)!=='見送り'}).map(function(e){return e.id});
-    base.ticketIds=db.tickets.filter(function(t){return !t.eventId&&t.date===base.depart&&t.result!=='落選'}).map(function(t){return t.id});
+    base.ticketIds=db.tickets.filter(function(t){return !t.eventId&&t.date===base.depart&&tkResult(t)!=='落選'}).map(function(t){return t.id});
   }
   ui.form={kind:kind,id:id||null};
   var html='<div class="sheet-head"><button class="btn-text" data-act="closeSheet">キャンセル</button>'
     +'<b>'+esc(spec.title)+(id?'を編集':'を登録')+'</b>'
     +'<button class="btn-text strong" data-act="saveForm">保存</button></div>'
     +'<form class="sheet-body" id="frm" onsubmit="return false" autocomplete="off"><div class="fgrid">'
-    +spec.fields.map(function(f){return fieldHtml(f,base[f.k])}).join('')
+    +spec.fields.map(function(f){return fieldHtml(f,base[f.k],base)}).join('')
     +'</div>'+datalists()
-    +(id?'<div style="margin-top:22px"><button type="button" class="btn line block" data-act="delItem">この'+esc(spec.title)+'を削除</button></div>':'')
+    +((id&&(kind==='event'||kind==='ticket'))?'<div style="margin-top:22px"><button type="button" class="btn ghost block" data-act="dupItem">📄 この内容で複製して新規作成</button></div>':'')
+    +(id?'<div style="margin-top:14px"><button type="button" class="btn line block" data-act="delItem">この'+esc(spec.title)+'を削除</button></div>':'')
     +'</form>';
   openSheet(html);
-  updateMemberList();updateFeePreview();
+  updateFeePreview();
 }
 function readForm(spec){
   var o={}, form=$('#frm');
   spec.fields.forEach(function(f){
     if(f.t==='hdr'||f.t==='feeprev')return;
+    if(f.t==='group'||f.t==='member'){
+      var se=form.elements[f.k], ne=form.elements[f.k+'_new'], gv=se?String(se.value):'';
+      if(gv==='__new__')gv=ne?String(ne.value).trim():'';
+      o[f.k]=gv;return;
+    }
     if(f.t==='ticketlinks'||f.t==='eventlinks'){
       o[f.k]=Array.prototype.map.call(form.querySelectorAll('input[name="'+f.k+'"]:checked'),function(e){return e.value});
       return;
@@ -669,10 +720,94 @@ function readForm(spec){
 }
 
 /* フォーム補助: メンバー候補・手数料プレビュー・購入元からの手数料自動入力・イベントからの自動入力 */
+/* グループ・メンバーのプルダウン */
+function groupNames(){
+  var a=db.settings.groups.map(function(g){return g.name});
+  ['tickets','events','reports','names'].forEach(function(k){db[k].forEach(function(x){if(x.group&&a.indexOf(x.group)<0)a.push(x.group)})});
+  return a;
+}
+function memberNames(group){
+  if(!group)return [];
+  var g=db.settings.groups.filter(function(x){return x.name===group})[0], a=g?g.members.slice():[];
+  ['tickets','events','reports'].forEach(function(k){db[k].forEach(function(x){if(x.group===group&&x.member&&a.indexOf(x.member)<0)a.push(x.member)})});
+  return a;
+}
+function selOptions(list,val,emptyLabel,newLabel){
+  var h='<option value="">'+esc(emptyLabel)+'</option>', has=false;
+  list.forEach(function(n){h+='<option value="'+esc(n)+'"'+(n===val?' selected':'')+'>'+esc(n)+'</option>';if(n===val)has=true});
+  if(val&&val!=='__new__'&&!has)h+='<option value="'+esc(val)+'" selected>'+esc(val)+'</option>';
+  return h+'<option value="__new__"'+(val==='__new__'?' selected':'')+'>'+esc(newLabel)+'</option>';
+}
+function syncNew(sel){
+  var n=$('#'+sel.id+'_new');if(!n)return;
+  var show=sel.value==='__new__';
+  n.style.display=show?'block':'none';
+  if(show&&document.activeElement===sel)setTimeout(function(){n.focus()},0);
+}
+function setSel(sel,val){
+  if(!sel)return;
+  var has=Array.prototype.some.call(sel.options,function(o){return o.value===val});
+  if(!has){var o=document.createElement('option');o.value=val;o.textContent=val;sel.insertBefore(o,sel.querySelector('option[value="__new__"]'))}
+  sel.value=val;syncNew(sel);
+}
+function curGroup(){
+  var s=$('#f_group');if(!s)return '';
+  if(s.value==='__new__'){var n=$('#f_group_new');return n?n.value.trim():''}
+  return s.value;
+}
 function updateMemberList(){
-  var dl=$('#dl_member'), g=$('#f_group');if(!dl)return;
-  var grp=g?db.settings.groups.filter(function(x){return x.name===g.value.trim()})[0]:null;
-  dl.innerHTML=grp?grp.members.map(function(m){return '<option value="'+esc(m)+'">'}).join(''):'';
+  var ms=$('#f_member');if(!ms)return;
+  var names=memberNames(curGroup()), cur=ms.value, keep=(cur==='__new__'||names.indexOf(cur)>=0)?cur:'';
+  ms.innerHTML=selOptions(names,keep,'グループ全体(個人なし)','＋新しいメンバーを入力…');
+  ms.value=keep;syncNew(ms);
+}
+/* 会場 → 都道府県: ①自分の登録履歴 ②内蔵の会場辞書 ③都道府県名・主要都市名 の順に推測 */
+var VENUE_KEYS=null;
+function venueKeys(){
+  if(VENUE_KEYS)return VENUE_KEYS;
+  var k=[];
+  VENUES.forEach(function(v){for(var i=0;i<v.length;i++){if(i===1)continue;k.push([norm(v[i]),v[1]])}});
+  CITY_ALIASES.forEach(function(c){k.push([norm(c[0]),c[1]])});
+  PREFS.forEach(function(p){k.push([norm(p),p]);var sh=p==='北海道'?'':p.replace(/[都府県]$/,'');if(sh)k.push([norm(sh),p])});
+  VENUE_KEYS=k;return k;
+}
+function learnedVenues(){
+  var m={}, names=[];
+  db.events.concat(db.tickets).forEach(function(x){
+    if(!x.venue)return;
+    var key=norm(String(x.venue).trim());
+    if(x.pref)m[key]=x.pref;
+    if(names.indexOf(x.venue)<0)names.push(x.venue);
+  });
+  return {map:m,names:names};
+}
+function guessPref(venue){
+  var v=norm(String(venue||'').trim());if(!v)return '';
+  var lv=learnedVenues();if(lv.map[v])return lv.map[v];
+  var best='',bl=0;
+  venueKeys().forEach(function(k){if(k[0].length>bl&&v.indexOf(k[0])>=0){best=k[1];bl=k[0].length}});
+  return best;
+}
+function venueSuggestions(){
+  var a=learnedVenues().names.slice();
+  VENUES.forEach(function(v){if(a.indexOf(v[0])<0)a.push(v[0])});
+  return a;
+}
+function autoPref(){
+  var v=$('#f_venue'), pf=$('#f_pref');if(!v||!pf)return;
+  if(pf.value!==''&&pf.dataset.auto!=='1')return;     // 自分で選んだ都道府県は上書きしない
+  var g=guessPref(v.value);
+  if(g){if(pf.value!==g){pf.value=g;toast('都道府県を自動入力しました: '+g)}pf.dataset.auto='1'}
+  else if(pf.dataset.auto==='1'){pf.value='';delete pf.dataset.auto}
+}
+/* 地図: アプリ内には埋め込まず、端末の地図アプリ/ブラウザで開く(iPhoneはApple、AndroidはGoogleマップ) */
+function isIOS(){var u=navigator.userAgent||'';return /iP(hone|ad|od)/.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function mapUrl(venue,pref){
+  var q=String(venue||'')+(pref&&String(venue).indexOf(pref)<0?' '+pref:'');
+  return isIOS()?'https://maps.apple.com/?q='+encodeURIComponent(q):'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+}
+function mapLink(venue,pref){
+  return venue?' <a class="maplink" href="'+esc(mapUrl(venue,pref))+'" target="_blank" rel="noopener noreferrer" data-act="noop">🗺 地図</a>':'';
 }
 function updateFeePreview(){
   var box=$('#feePrev'), f=$('#frm');if(!box||!f||!f.elements.price)return;
@@ -694,15 +829,18 @@ function applySourceFee(name){
 function applyEvent(id){
   var ev=db.events.filter(function(x){return x.id===id})[0], f=$('#frm');
   if(!ev||!f)return;
-  ['title','group','member','date','time','venue','pref'].forEach(function(k){
+  ['title','date','time','venue','pref'].forEach(function(k){
     var el=f.elements[k];if(el&&el.value===''&&ev[k])el.value=ev[k];
   });
+  if(ev.group&&!curGroup())setSel($('#f_group'),ev.group);
   updateMemberList();
+  if(ev.member){var ms=$('#f_member');if(ms&&ms.value==='')setSel(ms,ev.member)}
 }
 function formInput(e){
   var el=e.target;
   if(!ui.form||!el.closest||!el.closest('#frm'))return;
-  if(el.id==='f_group')updateMemberList();
+  if(el.id==='f_group_new')updateMemberList();
+  if(el.id==='f_venue')autoPref();
   if(ui.form.kind==='ticket'){
     if(el.id==='f_fee'||el.id==='f_orderFee')delete el.dataset.auto;
     updateFeePreview();
@@ -711,7 +849,10 @@ function formInput(e){
 function formChange(e){
   var el=e.target;
   if(!ui.form||!el.closest||!el.closest('#frm'))return;
-  if(el.id==='f_group')updateMemberList();
+  if(el.id==='f_group'){syncNew(el);updateMemberList()}
+  if(el.id==='f_member')syncNew(el);
+  if(el.id==='f_pref')delete el.dataset.auto;
+  if(el.id==='f_venue')autoPref();
   if(ui.form.kind==='ticket'){
     if(el.id==='f_source')applySourceFee(el.value);
     if(el.id==='f_eventId')applyEvent(el.value);
@@ -719,7 +860,9 @@ function formChange(e){
   }
 }
 function settingsChange(e){
-  var el=e.target, i=el.getAttribute&&el.getAttribute('data-src');
+  var el=e.target;if(!el.getAttribute)return;
+  if(el.getAttribute('data-hp')!=null){db.settings.homePref=el.value;save();render(true);toast('保存しました');return}
+  var i=el.getAttribute('data-src');
   if(i==null)return;
   var x=db.settings.sources[Number(i)];if(!x)return;
   x[el.getAttribute('data-sf')]=Math.max(0,Math.floor(num(el.value)));
@@ -748,6 +891,11 @@ function buildEvents(){
       push(day,{type:sh.kind,id:sh.id,title:sh.title||'(無題)',sub:[tag,sh.time,sh.venue].filter(Boolean).join(' '),
         color:groupColor(sh.group),att:sh.att,skip:sh.att==='見送り',dim:sh.att==='見送り'});
     });
+  });
+  db.tickets.forEach(function(t){
+    var r=tkResult(t);
+    if(r==='当落待ち'&&parseD(t.resultDate))push(t.resultDate,{type:'result',id:t.id,title:(t.title||'(無題)')+' 当落発表',sub:[t.holder,t.source].filter(Boolean).join(' / '),color:'#f59e0b'});
+    if(r==='当選'&&t.payStatus==='未入金'&&parseD(t.payDeadline))push(t.payDeadline,{type:'pay',id:t.id,title:(t.title||'(無題)')+' 入金期限',sub:[t.holder,t.source].filter(Boolean).join(' / '),color:'#ef4444'});
   });
   db.trips.forEach(function(t){
     span(t.depart,t.returnDate,function(day){
@@ -782,12 +930,46 @@ function linkedEvents(trip){
   var ids=Array.isArray(trip.eventIds)?trip.eventIds:[];
   return orderEvents(ids.map(function(id){return db.events.filter(function(e){return e.id===id})[0]}).filter(Boolean));
 }
+/* 申込状況: '当落待ち' | '当選' | '落選'(未設定の旧データは当選として扱う) */
+function tkResult(t){return t.result==='落選'?'落選':(t.result==='当落待ち'?'当落待ち':'当選')}
+/* 遠征の判定: お住まい(設定)と違う都道府県の、これからの公演 */
+function prepInfo(sh){
+  var home=db.settings.homePref;
+  if(!home||!sh||!sh.pref||sh.pref===home||!sh.date||(sh.end||sh.date)<todayStr())return null;
+  var trips=sh.kind==='event'?tripsOfEvent(sh.ref):tripsOf(sh.ref);
+  var transportOK=trips.some(function(t){return !!(t.shinkansen||t.plane||t.bus)});
+  var hotelOK=trips.some(function(t){return !!t.hotel||(t.depart&&t.returnDate&&t.depart===t.returnDate)});
+  return {trips:trips,needTrip:!trips.length,needTransport:trips.length>0&&!transportOK,needHotel:trips.length>0&&!hotelOK};
+}
+function startTrip(sh){
+  var p={name:(sh.title||'')+' 遠征',depart:sh.date||'',returnDate:sh.end||sh.date||'',venue:sh.venue||''};
+  if(sh.kind==='event')p.eventIds=[sh.id];else p.ticketIds=[sh.id];
+  openForm('trip',null,p);
+}
+function offerMoney(t){
+  if(!t||t.moneyLogged||tkResult(t)!=='当選'||tkTotal(t)<=0)return Promise.resolve();
+  var tot=tkTotal(t);
+  return confirmDlg('チケット代 '+yen(tot)+'(1枚あたり '+yen(tkUnit(t))+'・'+tkCount(t)+'枚・手数料込)を収支にも登録しますか？','登録する').then(function(ok){
+    if(!ok)return;
+    db.money.push({id:uid(),createdAt:Date.now(),type:'支出',date:todayStr(),category:'チケット',amount:tot,title:t.title,memo:'チケットから自動登録'});
+    t.moneyLogged=true;save();render(true);toast('収支に追加しました');
+  });
+}
+function offerTrip(t){
+  var ev=eventOf(t), sh=ev?showOfEvent(ev):showOfTicket(t);
+  if(sh.att==='見送り')return Promise.resolve();
+  var info=prepInfo(sh);
+  if(!info||!info.needTrip)return Promise.resolve();
+  return confirmDlg('会場が「'+sh.pref+'」です。遠征の準備(交通・ホテルの手配)を始めますか？','遠征を登録').then(function(ok){if(ok)startTrip(sh)});
+}
 /* イベント ⇔ チケット */
 function ticketsOfEvent(e){return db.tickets.filter(function(t){return t.eventId===e.id})}
 function eventOf(t){return t.eventId?(db.events.filter(function(e){return e.id===t.eventId})[0]||null):null}
 /* 参戦の状態: '参戦' | '検討中' | '見送り' */
 function tkAttend(t){
-  if(t.result==='落選'||t.status==='不参戦'||t.attend==='不参戦')return '見送り';
+  var r=tkResult(t);
+  if(r==='落選'||t.status==='不参戦'||t.attend==='不参戦')return '見送り';
+  if(r==='当落待ち')return '検討中';          // 当落が出るまでは「検討中」
   return t.attend==='参戦'?'参戦':'検討中';
 }
 function evAttend(e){
@@ -811,15 +993,12 @@ function eventOpts(){
 function sourceOpts(){return [{v:'',l:'未選択'}].concat(db.settings.sources.map(function(x){return x.name}))}
 function receptionOpts(){return [{v:'',l:'未選択'}].concat(RECEPTIONS)}
 /* 予定の一覧(イベント + イベントに紐づいていないチケット) */
+function showOfEvent(e){return {kind:'event',ref:e,id:e.id,title:e.title,date:e.date,end:e.endDate,time:e.time,venue:e.venue,pref:e.pref,group:e.group,member:e.member,att:evAttend(e)}}
+function showOfTicket(t){return {kind:'ticket',ref:t,id:t.id,title:t.title,date:t.date,end:'',time:t.time,venue:t.venue,pref:t.pref,group:t.group,member:t.member,att:tkAttend(t),lost:tkResult(t)==='落選'}}
 function shows(){
   var out=[];
-  db.events.forEach(function(e){
-    out.push({kind:'event',id:e.id,title:e.title,date:e.date,end:e.endDate,time:e.time,venue:e.venue,group:e.group,member:e.member,att:evAttend(e)});
-  });
-  db.tickets.forEach(function(t){
-    if(eventOf(t))return;
-    out.push({kind:'ticket',id:t.id,title:t.title,date:t.date,end:'',time:t.time,venue:t.venue,group:t.group,member:t.member,att:tkAttend(t),lost:t.result==='落選'});
-  });
+  db.events.forEach(function(e){out.push(showOfEvent(e))});
+  db.tickets.forEach(function(t){if(!eventOf(t))out.push(showOfTicket(t))});
   return out;
 }
 function tripOverlapsMonth(t,ym){
@@ -839,7 +1018,8 @@ function calcStats(){
     byName[n.name]={w:w,l:l};addG(n.group,w,l);ow+=w;ol+=l;
   });
   db.tickets.forEach(function(t){
-    var w=t.result==='落選'?0:1, l=1-w, bn=byName[t.holder];
+    var rs=tkResult(t);if(rs==='当落待ち')return;      // 当落待ちは勝率に入れない
+    var w=rs==='落選'?0:1, l=1-w, bn=byName[t.holder];
     if(bn){bn.w+=w;bn.l+=l;var nm=db.names.filter(function(n){return n.name===t.holder})[0];addG(nm?nm.group:t.group,w,l)}
     else addG(t.group,w,l);
     ow+=w;ol+=l;
@@ -871,6 +1051,44 @@ function viewDash(){
       +'<div class="row between"><div class="sub">★ 次の参戦</div><div style="font-weight:800;font-size:20px">'+(dd<0?'開催中':dd===0?'今日!':'あと'+dd+'日')+'</div></div>'
       +'<div class="ttl" style="margin-top:2px">'+esc(n.title)+'</div>'
       +'<div class="meta">'+fmtD(n.date,true)+' '+esc(n.time||'')+' '+esc(n.venue||'')+'</div></div>';
+  }
+  // 📮 申込中(当落待ち)・入金期限
+  var waits=db.tickets.filter(function(x){return tkResult(x)==='当落待ち'}).sort(function(a,b){return (a.resultDate||'9999').localeCompare(b.resultDate||'9999')});
+  var pays=db.tickets.filter(function(x){return tkResult(x)==='当選'&&x.payStatus==='未入金'&&x.payDeadline}).sort(function(a,b){return a.payDeadline.localeCompare(b.payDeadline)});
+  if(waits.length||pays.length){
+    h+='<div class="card"><h3>📮 申込・当落・入金</h3>';
+    waits.forEach(function(x){
+      var dd=x.resultDate?diffDays(t,x.resultDate):null, hot=dd!=null&&dd<=0;
+      var lb=dd==null?'当落日は未設定':(dd<0?'当落日から'+(-dd)+'日経過(結果を入力してください)':(dd===0?'🔔 今日が当落日!':'当落日 '+fmtD(x.resultDate)+'(あと'+dd+'日)'));
+      h+='<div class="ap'+(hot?' hot':'')+'"><div data-act="edit" data-kind="ticket" data-id="'+esc(x.id)+'" style="cursor:pointer"><div style="font-weight:700">⏳ '+esc(x.title||'(無題)')+'</div>'
+        +'<div class="meta">'+esc([x.holder,x.source,x.count?x.count+'枚':''].filter(Boolean).join(' / '))+'</div><div class="meta'+(hot?' warn':'')+'">'+lb+'</div></div>'
+        +'<div class="btnrow" style="margin-top:6px"><button class="btn sm" data-act="setResult" data-id="'+esc(x.id)+'" data-v="当選">当選</button>'
+        +'<button class="btn ghost sm" data-act="setResult" data-id="'+esc(x.id)+'" data-v="落選">落選</button></div></div>';
+    });
+    pays.forEach(function(x){
+      var dd=diffDays(t,x.payDeadline), hot=dd<=3;
+      h+='<div class="ap'+(hot?' hot':'')+'"><div data-act="edit" data-kind="ticket" data-id="'+esc(x.id)+'" style="cursor:pointer"><div style="font-weight:700">💴 '+esc(x.title||'(無題)')+'</div>'
+        +'<div class="meta'+(hot?' warn':'')+'">入金期限 '+fmtD(x.payDeadline,true)+(dd<0?'(期限切れ)':dd===0?'(今日まで!)':'(あと'+dd+'日)')+' / '+yen(tkTotal(x))+'</div></div>'
+        +'<div class="btnrow" style="margin-top:6px"><button class="btn sm" data-act="setPaid" data-id="'+esc(x.id)+'">入金済にする</button></div></div>';
+    });
+    h+='</div>';
+  }
+  // ✈️ 遠征の準備(お住まいと違う都道府県の参戦予定)
+  var prep=sh.filter(function(x){return x.att==='参戦'&&x.date&&(x.end||x.date)>=t}).map(function(x){return {sh:x,info:prepInfo(x)}})
+    .filter(function(o){return o.info&&(o.info.needTrip||o.info.needTransport||o.info.needHotel)}).sort(function(a,b){return a.sh.date.localeCompare(b.sh.date)});
+  if(prep.length){
+    h+='<div class="card"><h3>✈️ 遠征の準備</h3>'+prep.slice(0,5).map(function(o){
+      var x=o.sh, f=o.info, dd=diffDays(t,x.date), tags=[];
+      if(f.needTrip)tags.push('遠征が未登録');
+      if(f.needTransport)tags.push('🚅 交通が未手配');
+      if(f.needHotel)tags.push('🏨 ホテルが未手配');
+      return '<div class="ap"><div style="font-weight:700">'+esc(x.title)+'</div><div class="meta">'+esc([fmtD(x.date,true),x.pref].filter(Boolean).join(' / '))+(dd>0?'(あと'+dd+'日)':'')+'</div>'
+        +'<div class="meta warn">⚠️ '+tags.join(' / ')+'</div><div class="btnrow" style="margin-top:6px">'
+        +(f.needTrip?'<button class="btn sm" data-act="newTripFor" data-kind="'+x.kind+'" data-id="'+esc(x.id)+'">＋遠征を登録</button>'
+          :'<button class="btn sm" data-act="edit" data-kind="trip" data-id="'+esc(f.trips[0].id)+'">遠征を開く</button>')+'</div></div>';
+    }).join('')+'</div>';
+  }else if(!db.settings.homePref&&sh.some(function(x){return x.att==='参戦'&&x.pref&&(x.end||x.date||'')>=t})){
+    h+='<div class="banner" data-act="tab" data-v="set" style="cursor:pointer">✈️ 設定で「お住まいの都道府県」を選ぶと、遠征になる公演の交通・ホテル手配をお知らせします</div>';
   }
   h+='<div class="stats">'
     +'<div class="stat" data-act="tab" data-v="ticket"><b>'+ups.length+'件</b><span>今後の参戦予定</span></div>'
@@ -908,7 +1126,7 @@ function viewCal(){
     var vis=e.filter(function(x){return !x.skip});
     var sorted=vis.slice().sort(function(a,b){return (a.type==='trip'?1:0)-(b.type==='trip'?1:0)});
     var going=vis.some(function(x){return x.att==='参戦'});
-    var dots=sorted.slice(0,4).map(function(x){return '<span class="dot'+(x.type==='trip'?' trip':(x.att==='検討中'?' maybe':''))+'" style="--c:'+esc(x.color)+'"></span>'}).join('');
+    var dots=sorted.slice(0,4).map(function(x){return '<span class="dot'+(x.type==='trip'?' trip':(x.type==='result'||x.type==='pay'?' ann':(x.att==='検討中'?' maybe':'')))+'" style="--c:'+esc(x.color)+'"></span>'}).join('');
     cells+='<button class="cell d'+dow+(s===t?' today':'')+(s===ui.calSel?' sel':'')+'" data-act="calSel" data-date="'+s+'">'
       +(going?'<span class="st">★</span>':'')+'<span class="dn">'+d+'</span>'+(vis.length?'<span class="cnt">'+vis.length+'</span>':'')+'<span class="dots">'+dots+'</span></button>';
   }
@@ -921,9 +1139,9 @@ function viewCal(){
   h+='<div class="card" style="margin-top:12px"><div class="row between"><h3 style="margin:0">'+(sel?fmtD(sel,true):'')+' <span class="sub">'+se.length+'件</span></h3></div>';
   if(se.length){
     h+=se.map(function(x){
-      var ic={event:'🎤 ',ticket:'🎟 ',trip:'✈️ '}[x.type]||'';
+      var ic={event:'🎤 ',ticket:'🎟 ',trip:'✈️ ',result:'📮 ',pay:'💴 '}[x.type]||'';
       var ab=x.att?'<span class="badge" style="--b:'+ATT_COLOR[x.att]+'">'+(x.att==='参戦'?'★ ':'')+x.att+'</span>':'';
-      return '<div class="ev'+(x.dim?' dim':'')+'" data-act="edit" data-kind="'+x.type+'" data-id="'+esc(x.id)+'">'
+      return '<div class="ev'+(x.dim?' dim':'')+'" data-act="edit" data-kind="'+({event:'event',trip:'trip'}[x.type]||'ticket')+'" data-id="'+esc(x.id)+'">'
         +'<div class="bar2" style="--c:'+esc(x.color)+'"></div><div class="grow"><div style="font-weight:700">'+ic+esc(x.title)+'</div>'
         +(x.sub?'<div class="meta">'+esc(x.sub)+'</div>':'')+'</div>'+ab+'<span class="sub">›</span></div>';
     }).join('');
@@ -946,7 +1164,7 @@ VIEWS.cal=function(){return viewDash()+viewCal()+welcomeCard()};
 
 /* ---- チケット ---- */
 function viewTickets(){
-  var sopt=[['near','近い順'],['dateDesc','日付↓新'],['dateAsc','日付↑古'],['price','金額順'],['group','グループ順'],['created','登録順']];
+  var sopt=[['near','近い順'],['dateDesc','日付↓新'],['dateAsc','日付↑古'],['price','金額順'],['group','グループ順'],['created','登録順'],['wait','当落日順']];
   return '<div class="toolbar">'
     +'<input class="search" type="search" enterkeyhint="search" placeholder="🔍 公演名・会場・座席・名義などで検索" value="'+esc(ui.tQ)+'" data-bind="tQ" data-rf="ticket">'
     +'<div class="row gap" style="margin-bottom:8px">'
@@ -955,7 +1173,7 @@ function viewTickets(){
     +'<select data-bind="tPeriod" data-rf="ticket">'+[['','全期間'],['future','今後'],['past','過去']].map(function(o){return '<option value="'+o[0]+'"'+(ui.tPeriod===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'
     +'</div>'
     +'<div class="row gap" style="margin-bottom:8px"><select data-bind="tSource" data-rf="ticket"><option value="">全購入元</option>'+allSources().map(function(n){return '<option value="'+esc(n)+'"'+(ui.tSource===n?' selected':'')+'>'+esc(n)+'</option>'}).join('')+'</select>'
-    +'<select data-bind="tResult" data-rf="ticket">'+[['','当落すべて'],['win','当選のみ'],['lose','落選のみ']].map(function(o){return '<option value="'+o[0]+'"'+(ui.tResult===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'
+    +'<select data-bind="tResult" data-rf="ticket">'+[['','当落すべて'],['wait','当落待ちのみ'],['win','当選のみ'],['lose','落選のみ']].map(function(o){return '<option value="'+o[0]+'"'+(ui.tResult===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'
     +'<div class="chips"><button class="'+(ui.tStatus===''?'on':'')+'" data-act="setUi" data-k="tStatus" data-v="">すべて</button>'
     +STATUSES.map(function(s){return '<button class="'+(ui.tStatus===s?'on':'')+'" data-act="setUi" data-k="tStatus" data-v="'+s+'">'+s+'</button>'}).join('')+'</div></div>'
     +'<div id="tsum" class="sub" style="margin:0 2px 8px"></div><div id="tlist"></div>';
@@ -972,8 +1190,7 @@ function ticketFiltered(){
     if(ui.tStatus&&x.status!==ui.tStatus)return false;
     if(!gfMatch(ui.tGroup,x))return false;
     if(ui.tSource&&x.source!==ui.tSource)return false;
-    if(ui.tResult==='win'&&x.result==='落選')return false;
-    if(ui.tResult==='lose'&&x.result!=='落選')return false;
+    if(ui.tResult&&tkResult(x)!=={win:'当選',lose:'落選',wait:'当落待ち'}[ui.tResult])return false;
     if(ui.tPeriod==='future'&&!((x.date||'')>=t))return false;
     if(ui.tPeriod==='past'&&!((x.date||'')&&x.date<t))return false;
     return matchItem(x,toks);
@@ -985,6 +1202,13 @@ function ticketFiltered(){
     case 'price':list.sort(function(a,b){return tkUnit(b)-tkUnit(a)});break;
     case 'group':list.sort(function(a,b){return (a.group||'').localeCompare(b.group||'','ja')||dkey(a).localeCompare(dkey(b))});break;
     case 'created':list.sort(function(a,b){return (b.createdAt||0)-(a.createdAt||0)});break;
+    case 'wait':
+      list.sort(function(a,b){
+        var aw=tkResult(a)==='当落待ち'?0:1, bw=tkResult(b)==='当落待ち'?0:1;
+        if(aw!==bw)return aw-bw;
+        if(aw===0)return (a.resultDate||'9999').localeCompare(b.resultDate||'9999');
+        return dkey(a).localeCompare(dkey(b));
+      });break;
     default:
       var fut=list.filter(function(x){return (x.date||'')>=t}).sort(function(a,b){return dkey(a).localeCompare(dkey(b))});
       var past=list.filter(function(x){return !((x.date||'')>=t)}).sort(function(a,b){return dkey(b).localeCompare(dkey(a))});
@@ -993,14 +1217,19 @@ function ticketFiltered(){
   return list;
 }
 function ticketCard(x){
-  var lost=x.result==='落選';
+  var res=tkResult(x), lost=res==='落選';
   var c=groupColor(x.group), dim=(lost||x.status==='不参戦'||x.attend==='不参戦')?' dim':'', link=safeUrl(x.qr);
   var h='<div class="card tk tap'+dim+'" style="--c:'+esc(c)+'" data-act="edit" data-kind="ticket" data-id="'+esc(x.id)+'">'
     +'<div class="row between">'+(gchip(x.group,x.member)||'<span class="sub">グループ未設定</span>')
-    +(lost?'<span class="badge" style="--b:#64748b">落選</span>':'<span class="badge" style="--b:'+(STATUS_COLOR[x.status]||'#94a3b8')+'">'+esc(x.status||'—')+'</span>')+'</div>'
+    +(lost?'<span class="badge" style="--b:#64748b">落選</span>':(res==='当落待ち'?'<span class="badge" style="--b:#f59e0b">⏳ 当落待ち</span>':'<span class="badge" style="--b:'+(STATUS_COLOR[x.status]||'#94a3b8')+'">'+esc(x.status||'—')+'</span>'))+'</div>'
     +'<div class="ttl">'+esc(x.title)+'</div>';
   if(x.date||x.time)h+='<div class="meta">📅 '+fmtD(x.date,true)+' '+esc(x.time||'')+'</div>';
-  if(x.venue||x.pref)h+='<div class="meta">📍 '+esc(x.venue||'')+(x.pref?' ('+esc(x.pref)+')':'')+'</div>';
+  if(x.venue||x.pref)h+='<div class="meta">📍 '+esc(x.venue||'')+(x.pref?' ('+esc(x.pref)+')':'')+mapLink(x.venue,x.pref)+'</div>';
+  var ap=[];
+  if(x.appliedDate)ap.push('申込 '+fmtD(x.appliedDate));
+  if(x.resultDate){var rd=diffDays(todayStr(),x.resultDate);ap.push('当落 '+fmtD(x.resultDate)+(res==='当落待ち'?(rd===0?'(今日!)':rd>0?'(あと'+rd+'日)':'('+(-rd)+'日経過)'):''))}
+  if(x.payDeadline)ap.push('入金期限 '+fmtD(x.payDeadline)+(x.payStatus?'('+x.payStatus+')':''));
+  if(ap.length)h+='<div class="meta">📮 '+ap.join(' / ')+'</div>';
   var ev0=eventOf(x), shop=[x.source,x.winMethod].filter(Boolean);
   if(shop.length)h+='<div class="meta">🛒 '+shop.map(function(z){return esc(z)}).join(' / ')+'</div>';
   if(ev0&&ev0.title!==x.title)h+='<div class="meta">🎤 '+esc(ev0.title)+'</div>';
@@ -1025,6 +1254,8 @@ function ticketCard(x){
   if(info.length)h+='<div class="meta">🎟 '+info.join(' / ')+'</div>';
   var st=[];if(x.attend)st.push(x.attend==='参戦'?'★ 参戦':esc(x.attend));if(x.companions)st.push('同行: '+esc(x.companions));
   if(st.length)h+='<div class="meta">👥 '+st.join(' / ')+'</div>';
+  if(res==='当落待ち')h+='<div class="btnrow"><button class="btn sm" data-act="setResult" data-id="'+esc(x.id)+'" data-v="当選">当選にする</button><button class="btn ghost sm" data-act="setResult" data-id="'+esc(x.id)+'" data-v="落選">落選にする</button></div>';
+  if(res==='当選'&&x.payStatus==='未入金')h+='<div class="btnrow"><button class="btn sm" data-act="setPaid" data-id="'+esc(x.id)+'">入金済にする</button></div>';
   var trl=tripsOf(x);
   if(trl.length)h+='<div class="meta">✈️ 遠征: '+trl.map(function(t){return esc(t.name)}).join(' / ')+'</div>';
   if(x.qr){
@@ -1037,9 +1268,9 @@ function ticketCard(x){
 }
 function renderTicketList(){
   var list=ticketFiltered(), sum=0;
-  list.forEach(function(x){if(x.result!=='落選')sum+=tkTotal(x)});
+  list.forEach(function(x){if(tkResult(x)==='当選')sum+=tkTotal(x)});
   var s=$('#tsum'), l=$('#tlist');if(!s||!l)return;
-  s.textContent=list.length+'件 / 合計 '+yen(sum)+'(手数料込・落選を除く)';
+  s.textContent=list.length+'件 / 合計 '+yen(sum)+'(手数料込・当選分)';
   l.innerHTML=list.length?list.map(ticketCard).join(''):(db.tickets.length?'<div class="empty">条件に合うチケットがありません</div>':emptyBox('チケットがまだありません'));
 }
 
@@ -1078,17 +1309,28 @@ function eventCard(e){
     +'<div class="ttl">'+esc(e.title)+'</div>';
   if(e.kind)h+='<div class="meta">🏷 '+esc(e.kind)+'</div>';
   h+='<div class="meta">📅 '+(e.date?fmtD(e.date,true)+(e.endDate&&e.endDate>e.date?' 〜 '+fmtD(e.endDate,true):'')+(e.time?' '+esc(e.time):''):'日付未定')+'</div>';
-  if(e.venue||e.pref)h+='<div class="meta">📍 '+esc(e.venue||'')+(e.pref?' ('+esc(e.pref)+')':'')+'</div>';
+  if(e.venue||e.pref)h+='<div class="meta">📍 '+esc(e.venue||'')+(e.pref?' ('+esc(e.pref)+')':'')+mapLink(e.venue,e.pref)+'</div>';
   if(tks.length){
-    var w=tks.filter(function(t){return t.result!=='落選'}).length;
-    h+='<div class="meta">🎟 チケット '+tks.length+'件(当選 '+w+' / 落選 '+(tks.length-w)+')</div>';
+    var cw=0,cl=0,cp=0;
+    tks.forEach(function(t){var r=tkResult(t);if(r==='当選')cw++;else if(r==='落選')cl++;else cp++});
+    h+='<div class="meta">🎟 チケット '+tks.length+'件(当選 '+cw+' / 当落待ち '+cp+' / 落選 '+cl+')</div>';
   }else h+='<div class="meta">🎟 チケットなし</div>';
   if(trl.length)h+='<div class="meta">✈️ 遠征: '+trl.map(function(t){return esc(t.name)}).join(' / ')+'</div>';
+  var pinfo=(a==='参戦')?prepInfo(showOfEvent(e)):null;
+  if(pinfo&&(pinfo.needTrip||pinfo.needTransport||pinfo.needHotel)){
+    var pt=[];
+    if(pinfo.needTrip)pt.push('遠征が未登録');
+    if(pinfo.needTransport)pt.push('🚅 交通が未手配');
+    if(pinfo.needHotel)pt.push('🏨 ホテルが未手配');
+    h+='<div class="meta warn">⚠️ 遠征の準備: '+pt.join(' / ')+'</div>'
+      +(pinfo.needTrip?'<div class="btnrow"><button class="btn sm" data-act="newTripFor" data-kind="event" data-id="'+esc(e.id)+'">＋遠征を登録</button></div>':'');
+  }
   if(e.memo)h+='<div class="meta clamp" style="margin-top:6px">📝 '+esc(e.memo)+'</div>';
   h+='<div class="seg" style="margin:10px 0 0">'+ATT_EV.map(function(v){
     return '<button data-act="setAttend" data-id="'+esc(e.id)+'" data-v="'+v+'" class="'+(a===v?'on':'')+'">'+(v==='参戦'?'★ ':'')+v+'</button>';
   }).join('')+'</div>';
   h+='<div class="btnrow"><button class="btn ghost sm" data-act="addTicketFor" data-id="'+esc(e.id)+'">＋チケットを登録</button>'
+    +'<button class="btn ghost sm" data-act="dupEvent" data-id="'+esc(e.id)+'">📄 複製</button>'
     +(link?'<a class="btn ghost sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer" data-act="noop">情報ページ</a>':'')+'</div>';
   return h+'</div>';
 }
@@ -1143,6 +1385,12 @@ function renderNameList(){
     h+='<div class="wl"><div class="c" style="padding:8px 12px"><span>当選 '+s.w+'</span></div><div class="c" style="padding:8px 12px"><span>落選 '+s.l+'</span></div></div>'
       +'<div class="row between" style="margin-top:8px"><span class="sub">勝率</span><b style="color:var(--primary);font-size:18px">'+fmtRate(r)+'</b></div>'
       +'<div class="bar" style="margin-top:4px"><i style="width:'+(r||0)+'%"></i></div>';
+    var pend=db.tickets.filter(function(t){return t.holder===n.name&&tkResult(t)==='当落待ち'});
+    if(pend.length){
+      var nx=pend.filter(function(t){return t.resultDate}).sort(function(a,b){return a.resultDate.localeCompare(b.resultDate)})[0];
+      h+='<div class="meta warn" style="margin-top:6px">⏳ 当落待ち '+pend.length+'件'+(nx?'(次の当落日 '+fmtD(nx.resultDate)+')':'')+'</div>';
+    }
+    h+='<div class="btnrow"><button class="btn ghost sm" data-act="applyFor" data-id="'+esc(n.id)+'">＋この名義で申込</button></div>';
     if(n.memo)h+='<div class="meta clamp" style="margin-top:6px">📝 '+esc(n.memo)+'</div>';
     return h+'</div>';
   }).join('');
@@ -1185,6 +1433,12 @@ function renderTripList(){
     if(x.hotel||x.checkin||x.checkout){
       var nights=(x.checkin&&x.checkout)?diffDays(x.checkin,x.checkout):0;
       h+='<div class="meta">🏨 '+esc(x.hotel||'')+' '+(x.checkin?fmtD(x.checkin):'')+(x.checkout?' → '+fmtD(x.checkout):'')+(nights>0?' ('+nights+'泊)':'')+'</div>';
+    }
+    if(st!=='終了'){
+      var tg=[];
+      if(!(x.shinkansen||x.plane||x.bus))tg.push('🚅 交通が未登録');
+      if(!x.hotel&&!(x.depart&&x.returnDate&&x.depart===x.returnDate))tg.push('🏨 ホテルが未登録');
+      if(tg.length)h+='<div class="meta warn">⚠️ '+tg.join(' / ')+'</div>';
     }
     if(x.memo)h+='<div class="meta clamp" style="margin-top:6px">📝 '+esc(x.memo)+'</div>';
     return h+'</div>';
@@ -1284,6 +1538,8 @@ VIEWS.set=function(){
     +[['auto','自動'],['light','ライト'],['dark','ダーク']].map(function(o){return '<button class="'+(s.theme===o[0]?'on':'')+'" data-act="setTheme" data-v="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div>'
     +'<div class="sub" style="margin-bottom:4px">アクセントカラー</div><div class="seg">'
     +Object.keys(ACCENTS).map(function(k){return '<button class="'+(s.accent===k?'on':'')+'" data-act="setAccent" data-v="'+k+'">'+ACCENTS[k].n+'</button>'}).join('')+'</div></div>';
+  h+='<div class="card"><h3>🏠 お住まい</h3><div class="sub" style="margin-bottom:6px">お住まいの都道府県と違う会場の参戦を「遠征」とみなして、交通・ホテルの手配をお知らせします。</div>'
+    +'<select data-hp="1"><option value="">未設定</option>'+PREFS.map(function(p){return '<option value="'+esc(p)+'"'+(s.homePref===p?' selected':'')+'>'+esc(p)+'</option>'}).join('')+'</select></div>';
   h+='<div class="card"><h3>🌈 グループ・メンバー</h3><div class="sub" style="margin-bottom:6px">グループの下にメンバー(個人)を登録すると、個人仕事も「グループ › メンバー」で登録・絞り込みできます。色は左の四角をタップして変更。</div>'
     +(s.groups.length?s.groups.map(function(g,i){
       return '<div class="gblock"><div class="grow-row"><input type="color" value="'+esc(g.color)+'" data-gc="'+i+'" aria-label="'+esc(g.name)+'の色"><span class="nm">'+esc(g.name)+'</span>'
@@ -1379,6 +1635,51 @@ A.fab=function(){
   openForm(ui.tab==='ticket'?(ui.tkMode==='event'?'event':'ticket'):ui.tab,null);
 };
 A.edit=function(d){openForm(d.kind,d.id)};
+A.setResult=function(d){
+  var t=db.tickets.filter(function(x){return x.id===d.id})[0];if(!t)return;
+  var prev=tkResult(t);
+  t.result=d.v;t.updatedAt=Date.now();save();render(true);
+  toast(d.v==='当選'?'当選にしました 🎉':'落選にしました');
+  if(d.v==='当選'&&prev!=='当選')offerMoney(t).then(function(){return offerTrip(t)});
+};
+A.setPaid=function(d){
+  var t=db.tickets.filter(function(x){return x.id===d.id})[0];if(!t)return;
+  t.payStatus='入金済';t.updatedAt=Date.now();save();render(true);toast('入金済にしました');
+};
+A.applyFor=function(d){
+  var n=db.names.filter(function(x){return x.id===d.id})[0];if(!n)return;
+  openForm('ticket',null,{holder:n.name,group:n.group});
+};
+A.newTripFor=function(d){
+  var sh=null;
+  if(d.kind==='event'){var e=db.events.filter(function(x){return x.id===d.id})[0];if(e)sh=showOfEvent(e)}
+  else{var t=db.tickets.filter(function(x){return x.id===d.id})[0];if(t)sh=showOfTicket(t)}
+  if(sh)startTrip(sh);
+};
+function dupPreset(src){
+  var o=JSON.parse(JSON.stringify(src));
+  ['id','createdAt','updatedAt','moneyLogged'].forEach(function(k){delete o[k]});
+  return o;
+}
+A.dupEvent=function(d){
+  var e=db.events.filter(function(x){return x.id===d.id})[0];if(!e)return;
+  openForm('event',null,dupPreset(e));
+  toast('複製しました。日付・時間などを直して保存してください');
+};
+A.dupItem=function(){
+  if(!ui.form||!ui.form.id)return;
+  var kind=ui.form.kind, o=readForm(FORMS[kind]);     // 編集中の内容をそのまま引き継ぐ
+  if(kind==='ticket'){o.seat='';o.gate='';o.qr=''}
+  openForm(kind,null,o);
+  toast('複製しました。日付・時間などを直して保存してください');
+};
+A.openMap=function(){
+  var v=$('#f_venue'), pf=$('#f_pref'), venue=v?v.value.trim():'';
+  if(!venue){toast('会場名を入力してください');return}
+  var a=document.createElement('a');
+  a.href=mapUrl(venue,pf?pf.value:'');a.target='_blank';a.rel='noopener noreferrer';
+  document.body.appendChild(a);a.click();a.remove();
+};
 A.setAttend=function(d){
   var e=db.events.filter(function(x){return x.id===d.id})[0];if(!e)return;
   e.attend=d.v;e.updatedAt=Date.now();save();render(true);
@@ -1395,18 +1696,14 @@ A.saveForm=function(){
   var miss=spec.fields.filter(function(f){return f.req&&(o[f.k]===''||o[f.k]==null)})[0];
   if(miss){toast(miss.l+'を入力してください');return}
   if(kind==='event'&&o.date&&o.endDate&&o.endDate<o.date){toast('終了日は開始日以降にしてください');return}
-  var coll=db[COLL[kind]], item, isNew=!id;
-  if(id){item=coll.filter(function(x){return x.id===id})[0];if(!item){closeSheet();return}Object.assign(item,o);item.updatedAt=Date.now()}
+  var coll=db[COLL[kind]], item, isNew=!id, prevRes=null;
+  if(id){item=coll.filter(function(x){return x.id===id})[0];if(!item){closeSheet();return}if(kind==='ticket')prevRes=tkResult(item);Object.assign(item,o);item.updatedAt=Date.now()}
   else{item=Object.assign({id:uid(),createdAt:Date.now()},o);coll.push(item)}
   if(o.group){ensureGroup(o.group);if(o.member)ensureMember(o.group,o.member)}
   save();closeSheet();render(true);toast(isNew?'登録しました':'保存しました');
-  if(kind==='ticket'&&isNew&&o.result!=='落選'&&tkTotal(o)>0){
-    var tot=tkTotal(o);
-    confirmDlg('チケット代 '+yen(tot)+'(1枚あたり '+yen(tkUnit(o))+'・'+tkCount(o)+'枚・手数料込)を収支にも登録しますか？','登録する').then(function(ok){
-      if(!ok)return;
-      db.money.push({id:uid(),createdAt:Date.now(),type:'支出',date:todayStr(),category:'チケット',amount:tot,title:o.title,memo:'チケットから自動登録'});
-      save();render(true);toast('収支に追加しました');
-    });
+  // 当選になったら、収支への登録と遠征の準備を順にたずねる
+  if(kind==='ticket'&&tkResult(item)==='当選'&&(isNew||prevRes!=='当選')){
+    offerMoney(item).then(function(){return offerTrip(item)});
   }
 };
 A.delItem=function(){
